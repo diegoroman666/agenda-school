@@ -173,17 +173,19 @@
         ];
 
         // Colores para Papelitos y Bases de Turno
+        // hexBg/hexBorder/hexText/hexFrom/hexTo se usan con style inline para que NO sean alterados
+        // por la personalización del color principal de la app (applyTheme).
         const COLORES_PAPELITOS = [
-            { id: 'yellow', bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-900', from: 'from-yellow-50', to: 'to-yellow-200', shiftBg: 'bg-yellow-100', shiftHex: '#fef9c3' },
-            { id: 'blue', bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900', from: 'from-blue-50', to: 'to-blue-200', shiftBg: 'bg-blue-100', shiftHex: '#dbeafe' },
-            { id: 'pink', bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-900', from: 'from-pink-50', to: 'to-pink-200', shiftBg: 'bg-pink-100', shiftHex: '#fce7f3' },
-            { id: 'green', bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-900', from: 'from-green-50', to: 'to-green-200', shiftBg: 'bg-green-100', shiftHex: '#dcfce3' },
-            { id: 'purple', bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900', from: 'from-purple-50', to: 'to-purple-200', shiftBg: 'bg-purple-100', shiftHex: '#f3e8ff' },
-            { id: 'orange', bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-900', from: 'from-orange-50', to: 'to-orange-200', shiftBg: 'bg-orange-100', shiftHex: '#ffedd5' },
-            { id: 'red', bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-900', from: 'from-red-50', to: 'to-red-200', shiftBg: 'bg-red-100', shiftHex: '#fee2e2' },
-            { id: 'teal', bg: 'bg-teal-100', border: 'border-teal-300', text: 'text-teal-900', from: 'from-teal-50', to: 'to-teal-200', shiftBg: 'bg-teal-100', shiftHex: '#ccfbf1' },
-            { id: 'indigo', bg: 'bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-900', from: 'from-indigo-50', to: 'to-indigo-200', shiftBg: 'bg-indigo-100', shiftHex: '#e0e7ff' },
-            { id: 'white', bg: 'bg-white', border: 'border-gray-300', text: 'text-gray-800', from: 'from-white', to: 'to-gray-100', shiftBg: 'bg-gray-100', shiftHex: '#f3f4f6' },
+            { id: 'yellow', bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-900', from: 'from-yellow-50', to: 'to-yellow-200', shiftBg: 'bg-yellow-100', shiftHex: '#fef9c3', hexBg: '#fef9c3', hexBorder: '#fde047', hexText: '#713f12', hexFrom: '#fefce8', hexTo: '#fef08a' },
+            { id: 'blue',   bg: 'bg-blue-100',   border: 'border-blue-300',   text: 'text-blue-900',   from: 'from-blue-50',   to: 'to-blue-200',   shiftBg: 'bg-blue-100',   shiftHex: '#dbeafe', hexBg: '#dbeafe', hexBorder: '#93c5fd', hexText: '#1e3a8a', hexFrom: '#eff6ff', hexTo: '#bfdbfe' },
+            { id: 'pink',   bg: 'bg-pink-100',   border: 'border-pink-300',   text: 'text-pink-900',   from: 'from-pink-50',   to: 'to-pink-200',   shiftBg: 'bg-pink-100',   shiftHex: '#fce7f3', hexBg: '#fce7f3', hexBorder: '#f9a8d4', hexText: '#831843', hexFrom: '#fdf2f8', hexTo: '#fbcfe8' },
+            { id: 'green',  bg: 'bg-green-100',  border: 'border-green-300',  text: 'text-green-900',  from: 'from-green-50',  to: 'to-green-200',  shiftBg: 'bg-green-100',  shiftHex: '#dcfce7', hexBg: '#dcfce7', hexBorder: '#86efac', hexText: '#14532d', hexFrom: '#f0fdf4', hexTo: '#bbf7d0' },
+            { id: 'purple', bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900', from: 'from-purple-50', to: 'to-purple-200', shiftBg: 'bg-purple-100', shiftHex: '#f3e8ff', hexBg: '#f3e8ff', hexBorder: '#d8b4fe', hexText: '#581c87', hexFrom: '#faf5ff', hexTo: '#e9d5ff' },
+            { id: 'orange', bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-900', from: 'from-orange-50', to: 'to-orange-200', shiftBg: 'bg-orange-100', shiftHex: '#ffedd5', hexBg: '#ffedd5', hexBorder: '#fdba74', hexText: '#7c2d12', hexFrom: '#fff7ed', hexTo: '#fed7aa' },
+            { id: 'red',    bg: 'bg-red-100',    border: 'border-red-300',    text: 'text-red-900',    from: 'from-red-50',    to: 'to-red-200',    shiftBg: 'bg-red-100',    shiftHex: '#fee2e2', hexBg: '#fee2e2', hexBorder: '#fca5a5', hexText: '#7f1d1d', hexFrom: '#fef2f2', hexTo: '#fecaca' },
+            { id: 'teal',   bg: 'bg-teal-100',   border: 'border-teal-300',   text: 'text-teal-900',   from: 'from-teal-50',   to: 'to-teal-200',   shiftBg: 'bg-teal-100',   shiftHex: '#ccfbf1', hexBg: '#ccfbf1', hexBorder: '#5eead4', hexText: '#134e4a', hexFrom: '#f0fdfa', hexTo: '#99f6e4' },
+            { id: 'indigo', bg: 'bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-900', from: 'from-indigo-50', to: 'to-indigo-200', shiftBg: 'bg-indigo-100', shiftHex: '#e0e7ff', hexBg: '#e0e7ff', hexBorder: '#a5b4fc', hexText: '#312e81', hexFrom: '#eef2ff', hexTo: '#c7d2fe' },
+            { id: 'white',  bg: 'bg-white',      border: 'border-gray-300',   text: 'text-gray-800',   from: 'from-white',     to: 'to-gray-100',   shiftBg: 'bg-gray-100',   shiftHex: '#f3f4f6', hexBg: '#ffffff', hexBorder: '#d1d5db', hexText: '#1f2937', hexFrom: '#ffffff', hexTo: '#f3f4f6' },
         ];
         
         const DESIGNS = [
@@ -530,11 +532,9 @@
                 this.shiftFormData.workColor = colorId;
                 document.querySelectorAll('.shift-color-btn').forEach(btn => {
                     const cConfig = this.getColorConfig(btn.dataset.color);
-                    if(btn.dataset.color === colorId) {
-                        btn.className = `shift-color-btn w-8 h-8 rounded-full border-2 ${cConfig.bg} ${cConfig.border} ring-2 ring-offset-2 ring-blue-500 scale-110 transition-all`;
-                    } else {
-                        btn.className = `shift-color-btn w-8 h-8 rounded-full border-2 ${cConfig.bg} ${cConfig.border} opacity-70 hover:opacity-100 hover:scale-105 transition-all`;
-                    }
+                    const isSelected = btn.dataset.color === colorId;
+                    btn.className = `shift-color-btn w-8 h-8 rounded-full border-2 transition-all ${isSelected ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`;
+                    btn.style.cssText = `background-color: ${cConfig.hexBg} !important; border-color: ${cConfig.hexBorder} !important;`;
                 });
             },
             saveShiftConfig() {
@@ -603,14 +603,13 @@
 
                 const colorConfig = this.getColorConfig(this.modalData.color);
                 const design = this.modalData.design;
-                
+
+                // Botones de color: usar inline styles inmunes al theme
                 document.querySelectorAll('.color-btn').forEach(btn => {
-                    if(btn.dataset.color === this.modalData.color) {
-                        btn.className = `color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 ${colorConfig.bg} ${colorConfig.border} ring-2 ring-offset-2 ring-gray-400 scale-110 transition-all`;
-                    } else {
-                        const btnColorConfig = this.getColorConfig(btn.dataset.color);
-                        btn.className = `color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 ${btnColorConfig.bg} ${btnColorConfig.border} opacity-80 hover:opacity-100 hover:scale-105 transition-all`;
-                    }
+                    const btnColorConfig = this.getColorConfig(btn.dataset.color);
+                    const isSelected = btn.dataset.color === this.modalData.color;
+                    btn.className = `color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 transition-all ${isSelected ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'opacity-80 hover:opacity-100 hover:scale-105'}`;
+                    btn.style.cssText = `background-color: ${btnColorConfig.hexBg} !important; border-color: ${btnColorConfig.hexBorder} !important;`;
                 });
 
                 document.querySelectorAll('.design-btn').forEach(btn => {
@@ -620,33 +619,39 @@
                         btn.className = `design-btn px-2 md:px-3 py-1 text-xs border border-gray-300 text-gray-600 bg-white hover:bg-gray-50 rounded-md transition-all`;
                     }
                 });
-                
+
                 const textarea = document.getElementById('modal-text');
                 const textareaWrapper = document.getElementById('modal-text-wrapper');
                 if(!textarea) return;
 
-                let wrapClasses = `relative w-full rounded-lg transition-all `;
-                let txtClasses = `w-full border-0 p-2 md:p-3 text-sm md:text-base ${colorConfig.text} min-h-[80px] md:min-h-[100px] outline-none resize-none focus:ring-0 bg-transparent relative z-10`;
+                // Preview del papelito: inline styles inmunes al theme
+                let wrapClasses = `relative w-full rounded-lg transition-all border`;
+                let wrapStyle = `border-color: ${colorConfig.hexBorder} !important;`;
+                let txtClasses = `w-full border-0 p-2 md:p-3 text-sm md:text-base min-h-[80px] md:min-h-[100px] outline-none resize-none focus:ring-0 bg-transparent relative z-10`;
+                const txtStyle = `color: ${colorConfig.hexText} !important;`;
                 let decoratorsHtml = '';
 
                 if (design === 'gradient') {
-                    wrapClasses += `bg-gradient-to-br ${colorConfig.from} ${colorConfig.to} border ${colorConfig.border}`;
+                    wrapStyle += ` background-image: linear-gradient(to bottom right, ${colorConfig.hexFrom}, ${colorConfig.hexTo}) !important; background-color: ${colorConfig.hexBg} !important;`;
                 } else if (design === 'tape') {
-                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                    wrapStyle += ` background-color: ${colorConfig.hexBg} !important;`;
                     decoratorsHtml = `<div class="absolute top-[-6px] left-1/2 transform -translate-x-1/2 w-8 h-3 bg-white/60 rotate-[-3deg] shadow-sm z-20 pointer-events-none"></div>`;
                 } else if (design === 'pin') {
-                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                    wrapStyle += ` background-color: ${colorConfig.hexBg} !important;`;
                     decoratorsHtml = `<div class="absolute top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 shadow-sm z-20 border border-red-700 pointer-events-none"></div>`;
                     txtClasses += ` pt-4`;
                 } else if (design === 'shadow') {
-                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border} shadow-md`;
+                    wrapStyle += ` background-color: ${colorConfig.hexBg} !important;`;
+                    wrapClasses += ` shadow-md`;
                 } else {
-                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                    wrapStyle += ` background-color: ${colorConfig.hexBg} !important;`;
                 }
 
                 textareaWrapper.className = wrapClasses;
+                textareaWrapper.style.cssText = wrapStyle;
                 textarea.className = txtClasses;
-                
+                textarea.style.cssText = txtStyle;
+
                 const existingDecorators = textareaWrapper.querySelectorAll('.decorator');
                 existingDecorators.forEach(el => el.remove());
                 if(decoratorsHtml) textareaWrapper.insertAdjacentHTML('afterbegin', `<div class="decorator">${decoratorsHtml}</div>`);
@@ -896,36 +901,44 @@
             generateNoteHtml(note, isMonthView = false) {
                 const colorConfig = this.getColorConfig(note.color);
                 const design = note.design || 'classic';
-                
-                let containerClasses = isMonthView 
+
+                let containerClasses = isMonthView
                     ? `text-[9px] md:text-xs p-1 md:p-1.5 rounded border shadow-sm mb-0.5 md:mb-1 relative overflow-hidden `
                     : `p-1 md:p-2 rounded-md border transform hover:scale-[1.02] transition-all flex flex-col mb-1 relative overflow-hidden h-max `;
-                    
+
+                // Estilos inline con !important para que el theme global (applyTheme) NO altere los colores del papelito
+                let containerStyle = `border-color: ${colorConfig.hexBorder} !important;`;
                 let extraElements = '';
-                
+
                 if (design === 'gradient') {
-                    containerClasses += `bg-gradient-to-br ${colorConfig.from} ${colorConfig.to} ${colorConfig.border} shadow-sm`;
+                    containerStyle += ` background-image: linear-gradient(to bottom right, ${colorConfig.hexFrom}, ${colorConfig.hexTo}) !important; background-color: ${colorConfig.hexBg} !important;`;
+                    containerClasses += `shadow-sm`;
                 } else if (design === 'tape') {
-                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-sm`;
+                    containerStyle += ` background-color: ${colorConfig.hexBg} !important;`;
+                    containerClasses += `shadow-sm`;
                     if (!isMonthView) extraElements = `<div class="absolute top-[-4px] left-1/2 transform -translate-x-1/2 w-6 h-2 bg-white/60 rotate-[-3deg] shadow-[0_1px_1px_rgba(0,0,0,0.1)] z-10"></div>`;
                 } else if (design === 'pin') {
-                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-md`;
+                    containerStyle += ` background-color: ${colorConfig.hexBg} !important;`;
+                    containerClasses += `shadow-md`;
                     containerClasses += isMonthView ? ' pt-2' : ' pt-2 md:pt-3';
                     if (!isMonthView) extraElements = `<div class="absolute top-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 shadow-[0_1px_2px_rgba(0,0,0,0.4)] z-10 border border-red-700"></div>`;
                 } else if (design === 'shadow') {
-                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-[3px_4px_5px_rgba(0,0,0,0.15)] rotate-1`;
+                    containerStyle += ` background-color: ${colorConfig.hexBg} !important;`;
+                    containerClasses += `shadow-[3px_4px_5px_rgba(0,0,0,0.15)] rotate-1`;
                 } else {
-                    containerClasses += `${colorConfig.bg} ${colorConfig.border} ${isMonthView ? '' : 'shadow-[1px_2px_3px_rgba(0,0,0,0.05)]'}`;
+                    containerStyle += ` background-color: ${colorConfig.hexBg} !important;`;
+                    if (!isMonthView) containerClasses += `shadow-[1px_2px_3px_rgba(0,0,0,0.05)]`;
                 }
-                
-                const textClasses = isMonthView 
-                    ? `${colorConfig.text} whitespace-pre-wrap break-words` 
-                    : `text-[9px] md:text-xs font-medium leading-tight whitespace-pre-wrap break-words ${colorConfig.text} relative z-0`;
+
+                const textClasses = isMonthView
+                    ? `whitespace-pre-wrap break-words`
+                    : `text-[9px] md:text-xs font-medium leading-tight whitespace-pre-wrap break-words relative z-0`;
+                const textStyle = `color: ${colorConfig.hexText} !important;`;
 
                 return `
-                    <div onclick="event.stopPropagation(); app.openModalToEdit('${note.id}')" class="${containerClasses}">
+                    <div onclick="event.stopPropagation(); app.openModalToEdit('${note.id}')" class="${containerClasses}" style="${containerStyle}">
                         ${extraElements}
-                        <p class="${textClasses}">${note.text}</p>
+                        <p class="${textClasses}" style="${textStyle}">${note.text}</p>
                     </div>
                 `;
             },
@@ -950,11 +963,17 @@
                     const shift = this.getShiftStatusForDate(dateStr);
                     const dayOfWeek = dateObj.getDay(); 
                     
-                    let dayBgClass = isToday ? 'bg-blue-50/80 border-2 border-blue-400' : 'bg-white hover:bg-gray-50';
+                    // "Hoy" usa azul fijo inline (no se altera con el theme)
+                    let dayBgClass = isToday ? 'border-2' : 'bg-white hover:bg-gray-50';
+                    let dayBgStyle = isToday ? 'background-color: rgba(219, 234, 254, 0.8) !important; border-color: #60a5fa !important;' : '';
                     if (shift.isWork) {
                         const shiftColorConfig = this.getColorConfig(shift.colorId);
-                        dayBgClass = `${shiftColorConfig.shiftBg} hover:brightness-95 border border-${shiftColorConfig.border.split('-')[1]}-200`;
-                        if (isToday) dayBgClass += ' border-2 border-blue-500 shadow-inner';
+                        dayBgClass = 'hover:brightness-95 border';
+                        dayBgStyle = `background-color: ${shiftColorConfig.shiftHex} !important; border-color: ${shiftColorConfig.hexBorder} !important;`;
+                        if (isToday) {
+                            dayBgClass = 'hover:brightness-95 border-2 shadow-inner';
+                            dayBgStyle = `background-color: ${shiftColorConfig.shiftHex} !important; border-color: #3b82f6 !important;`;
+                        }
                     }
 
                     let dayBlocksHtml = '';
@@ -969,21 +988,23 @@
                         
                         if (catId !== 'none' || blockNotes.length > 0 || baseClass) {
                             const catConfig = BLOCK_CATEGORIES.find(c => c.id === catId) || BLOCK_CATEGORIES[0];
-                            const blockBg = catId === 'none' ? 'bg-transparent' : catConfig.bg;
-                            const blockText = catId === 'none' ? 'text-gray-500' : 'text-white font-bold';
-                            
+                            // Inline styles inmunes al theme para los colores de "Destacar fondo"
+                            const blockStyle = catId === 'none' ? '' : `background-color: ${catConfig.hexBg} !important; color: ${catConfig.hexColor} !important;`;
+                            const blockTextClass = catId === 'none' ? 'text-gray-500' : 'font-bold';
+
                             let notesHtml = blockNotes.map(note => this.generateNoteHtml(note, true)).join('');
-                            
-                            // Mostrar la clase base si la hay
+
+                            // Cajita de clase base con azul fijo inline (no se altera con el theme)
                             let baseClassHtml = '';
                             if (baseClass) {
-                                baseClassHtml = `<div class="text-[8px] font-bold text-blue-900 bg-blue-100/80 border border-blue-200 px-1 py-0.5 rounded shadow-sm text-center mb-0.5 truncate">${baseClass}</div>`;
+                                baseClassHtml = `<div class="text-[8px] font-bold px-1 py-0.5 rounded shadow-sm text-center mb-0.5 truncate" style="color: #1e3a8a !important; background-color: rgba(219, 234, 254, 0.8) !important; border: 1px solid #bfdbfe !important;">${baseClass}</div>`;
                             }
-                            
+
                             dayBlocksHtml += `
                                 <div onclick="event.stopPropagation(); app.openModalToCreate('${dateStr}', '${block.id}')"
-                                     class="mb-1 p-1 rounded border ${catId === 'none' ? 'border-gray-200' : 'border-transparent shadow-sm'} ${blockBg} hover:brightness-95 transition-all cursor-pointer">
-                                    <div class="text-[8px] md:text-[10px] mb-0.5 leading-tight ${blockText} flex justify-between">
+                                     class="mb-1 p-1 rounded border ${catId === 'none' ? 'border-gray-200 bg-transparent' : 'border-transparent shadow-sm'} hover:brightness-95 transition-all cursor-pointer"
+                                     style="${blockStyle}">
+                                    <div class="text-[8px] md:text-[10px] mb-0.5 leading-tight ${blockTextClass} flex justify-between" ${catId !== 'none' ? `style="color: ${catConfig.hexColor} !important;"` : ''}>
                                         <span>${block.time}</span>
                                         ${catId !== 'none' ? `<span>${catConfig.label.split(' ')[0]}</span>` : ''}
                                     </div>
@@ -997,7 +1018,7 @@
                     });
 
                     daysHtml += `
-                        <div class="min-h-[100px] md:min-h-[140px] border-b border-r border-gray-200 p-1 md:p-2 flex flex-col transition-colors relative group ${dayBgClass}">
+                        <div class="min-h-[100px] md:min-h-[140px] border-b border-r border-gray-200 p-1 md:p-2 flex flex-col transition-colors relative group ${dayBgClass}" style="${dayBgStyle}">
                             <div class="flex justify-between items-start mb-1">
                                 <button onclick="event.stopPropagation(); app.changeDateAndGoToWeek(${year}, ${month}, ${i})" 
                                         class="text-[9px] md:text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" title="Ir a la Semana">
@@ -1066,32 +1087,36 @@
                     const shift = this.getShiftStatusForDate(dateStr);
                     const dayOfWeek = date.getDay(); // 0 Dom, 1 Lun
                     
-                    // Fondo de la fila completa si hay turno activo
-                    let rowBgClass = 'bg-white';
+                    // Fondo de la fila completa si hay turno activo (inline para que el theme no lo altere)
+                    let rowStyle = '';
                     if (shift.isWork) {
-                        rowBgClass = this.getColorConfig(shift.colorId).shiftBg;
+                        rowStyle = `background-color: ${this.getColorConfig(shift.colorId).shiftHex} !important;`;
                     }
 
                     let colsHtml = SCHEDULE_BLOCKS.map(block => {
                         const cellKey = `${dateStr}_${block.id}`;
                         const catId = this.blockSettings[cellKey] || 'none';
                         const catConfig = BLOCK_CATEGORIES.find(c => c.id === catId) || BLOCK_CATEGORIES[0];
-                        
-                        let bgClass = 'hover:bg-black/5';
+
+                        // Inline style inmune al theme: "Destacar fondo" o color de turno
+                        let cellStyle = '';
+                        let cellClass = 'hover:bg-black/5';
                         if (catId !== 'none') {
-                            bgClass = `${catConfig.bg} hover:brightness-95 shadow-inner`;
+                            cellStyle = `background-color: ${catConfig.hexBg} !important;`;
+                            cellClass = 'hover:brightness-95 shadow-inner';
                         } else if (shift.isWork) {
-                            const shiftColorConfig = this.getColorConfig(shift.colorId);
-                            bgClass = `${shiftColorConfig.shiftBg} hover:brightness-95`;
+                            cellStyle = `background-color: ${this.getColorConfig(shift.colorId).shiftHex} !important;`;
+                            cellClass = 'hover:brightness-95';
                         }
 
                         // Generar UI para el horario predeterminado si no está oculto
                         const baseKey = `${dayOfWeek}_${block.id}`;
                         const baseClass = (!this.hiddenBaseClasses || !this.hiddenBaseClasses[baseKey]) && BASE_SCHEDULE[dayOfWeek] && BASE_SCHEDULE[dayOfWeek][block.id] ? BASE_SCHEDULE[dayOfWeek][block.id] : null;
-                        
+
+                        // Cajita de clase base con azul fijo inline (no se altera con el theme)
                         let baseClassHtml = '';
                         if (baseClass) {
-                            baseClassHtml = `<div class="text-[9px] md:text-[10px] font-bold text-blue-900 bg-blue-100 border border-blue-200 px-1 py-0.5 rounded shadow-sm text-center mb-1 w-full truncate relative z-10 opacity-90">${baseClass}</div>`;
+                            baseClassHtml = `<div class="text-[9px] md:text-[10px] font-bold px-1 py-0.5 rounded shadow-sm text-center mb-1 w-full truncate relative z-10 opacity-90" style="color: #1e3a8a !important; background-color: #dbeafe !important; border: 1px solid #bfdbfe !important;">${baseClass}</div>`;
                         }
 
                         const cellNotes = this.notes.filter(n => n.date === dateStr && n.blockId === block.id);
@@ -1099,7 +1124,8 @@
 
                         return `
                             <div onclick="app.openModalToCreate('${dateStr}', '${block.id}')"
-                                 class="relative min-h-[80px] md:min-h-[100px] border-r border-b border-gray-200 p-1 md:p-1.5 cursor-pointer transition-all group ${bgClass}">
+                                 class="relative min-h-[80px] md:min-h-[100px] border-r border-b border-gray-200 p-1 md:p-1.5 cursor-pointer transition-all group ${cellClass}"
+                                 style="${cellStyle}">
                                 <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
                                      <div class="bg-white/80 p-1 md:p-1.5 rounded-full shadow-md backdrop-blur-sm">
                                          <i data-lucide="plus" class="w-4 h-4 md:w-6 md:h-6 text-gray-800"></i>
@@ -1114,7 +1140,7 @@
                     }).join('');
 
                     return `
-                        <div class="flex w-full min-w-[900px] md:min-w-0 ${rowBgClass}">
+                        <div class="flex w-full min-w-[900px] md:min-w-0" style="${rowStyle}">
                             <div class="sticky left-0 z-20 w-20 md:w-32 flex-shrink-0 border-r border-b border-gray-300 p-1 md:p-2 flex flex-col justify-center items-center text-center bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                                 <span class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">${DIAS_SEMANA_UI[i]}</span>
                                 <span class="text-sm md:text-xl mt-0.5 md:mt-1 ${isToday ? 'font-bold text-blue-600 bg-blue-100/80 rounded-full w-7 h-7 md:w-10 md:h-10 flex items-center justify-center mx-auto ring-2 ring-blue-500' : 'text-gray-800 font-semibold'}">${date.getDate()}</span>
@@ -1193,10 +1219,11 @@
                     const sd = this.shiftFormData;
                     
                     let shiftColorOptions = COLORES_PAPELITOS.map(c => `
-                        <button type="button" 
+                        <button type="button"
                                 data-color="${c.id}"
                                 onclick="app.setShiftModalColor('${c.id}')"
-                                class="shift-color-btn w-8 h-8 rounded-full border-2 ${c.bg} ${c.border} ${sd.workColor === c.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'} transition-all"></button>
+                                style="background-color: ${c.hexBg} !important; border-color: ${c.hexBorder} !important;"
+                                class="shift-color-btn w-8 h-8 rounded-full border-2 ${sd.workColor === c.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'} transition-all"></button>
                     `).join('');
 
                     // UI de Archivo Adjunto dentro del Modal
