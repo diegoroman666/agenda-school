@@ -1,0 +1,10 @@
+# Claude Code local config / worktrees
+.claude/
+.sixth/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/

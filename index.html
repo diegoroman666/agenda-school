@@ -1,0 +1,1458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda Escolar - Reemplazo</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- HTML2Canvas para exportar a JPG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* Personalizar scrollbars para que se vea más limpio */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+
+        /* Clase temporal para exportación */
+        .export-mode {
+            width: max-content !important;
+            height: max-content !important;
+            overflow: visible !important;
+        }
+    </style>
+</head>
+<body class="bg-[#f3f4f6] text-gray-800 font-sans min-h-screen flex justify-center p-2 md:p-8">
+
+    <!-- Contenedor Principal de la App -->
+    <div class="max-w-6xl w-full bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col overflow-hidden h-[95vh] md:h-[90vh]" id="app-container">
+        
+        <!-- HEADER -->
+        <header class="bg-white px-4 md:px-6 py-3 md:py-4 border-b border-gray-200 flex flex-col lg:flex-row items-center justify-between gap-3 md:gap-4 z-20 shadow-sm relative shrink-0">
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-center lg:justify-start">
+                <div class="bg-blue-600 p-2 rounded-lg shadow-md flex-shrink-0">
+                    <i data-lucide="calendar" class="w-5 h-5 md:w-6 md:h-6 text-white"></i>
+                </div>
+                <div class="text-center lg:text-left">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800 tracking-tight">Agenda Escolar</h1>
+                    <p class="text-xs md:text-sm text-gray-500 font-medium" id="header-date-text"></p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4 flex-wrap justify-center w-full lg:w-auto">
+                
+                <!-- Botón IA Pizarra Virtual -->
+                <a href="https://pizarra-virtual-matematico.netlify.app" target="_blank" class="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 text-xs md:text-sm font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-md hover:bg-purple-100 transition shadow-sm">
+                    <i data-lucide="bot" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                    <span class="hidden lg:inline">IA Pizarra Virtual</span>
+                    <span class="lg:hidden">IA Pizarra</span>
+                </a>
+
+                <!-- Botón Ver Horario Adjunto (Se muestra dinámicamente) -->
+                <div id="attached-btn-container" class="hidden">
+                    <button onclick="app.toggleAttachedView()" class="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 text-xs md:text-sm font-bold text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 transition shadow-sm">
+                        <i data-lucide="paperclip" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                        <span class="hidden md:inline" id="attached-btn-text">Ver Horario</span>
+                        <span class="md:hidden">Adjunto</span>
+                    </button>
+                </div>
+
+                <!-- Botón Apariencia (Modo Noche / Color) -->
+                <button onclick="app.openAppearanceModal()" class="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 text-xs md:text-sm font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition shadow-sm">
+                    <i data-lucide="palette" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                    <span class="hidden md:inline">Apariencia</span>
+                    <span class="md:hidden">Color</span>
+                </button>
+
+                <!-- Botón Configurar Turno -->
+                <button onclick="app.openShiftModal()" class="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 text-xs md:text-sm font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition shadow-sm">
+                    <i data-lucide="settings-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                    <span class="hidden md:inline">Configurar Turno</span>
+                    <span class="md:hidden">Turno</span>
+                </button>
+
+                <!-- Menú de Descarga -->
+                <div class="relative">
+                    <button onclick="app.toggleExportMenu()" class="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3 py-1.5 text-xs md:text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition shadow-sm">
+                        <i data-lucide="download" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                        <span class="hidden sm:inline">Descargar</span>
+                    </button>
+                    
+                    <div id="export-menu" class="hidden absolute right-0 mt-2 w-40 md:w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50 overflow-hidden">
+                        <button onclick="app.exportJPG()" class="w-full text-left px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                            <i data-lucide="image" class="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-600"></i> JPG
+                        </button>
+                        <button onclick="app.exportWord()" class="w-full text-left px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t border-gray-100">
+                            <i data-lucide="file-text" class="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-600"></i> Word
+                        </button>
+                        <button onclick="app.exportExcel()" class="w-full text-left px-3 md:px-4 py-2 text-xs md:text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 border-t border-gray-100">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600"></i> Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Controles de Navegación -->
+                <div class="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner">
+                    <button onclick="app.prevPeriod()" class="p-1 md:p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 transition">
+                        <i data-lucide="chevron-left" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+                    <button onclick="app.goToToday()" class="px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-sm font-semibold rounded hover:bg-white hover:shadow-sm text-gray-700 transition mx-0.5 md:mx-1">
+                        Hoy
+                    </button>
+                    <button onclick="app.nextPeriod()" class="p-1 md:p-1.5 rounded hover:bg-white hover:shadow-sm text-gray-600 transition">
+                        <i data-lucide="chevron-right" class="w-4 h-4 md:w-5 md:h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Toggle de Vistas -->
+                <div class="flex items-center bg-gray-100 rounded-lg p-1 shadow-inner" id="view-toggles">
+                    <button onclick="app.setView('month')" id="btn-view-month" class="px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 text-gray-500 hover:text-gray-700">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                        <span class="hidden md:inline">Mes</span>
+                    </button>
+                    <button onclick="app.setView('week')" id="btn-view-week" class="px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 text-gray-500 hover:text-gray-700">
+                        <i data-lucide="calendar-days" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                        <span class="hidden md:inline">Semana</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- SECCIÓN DE HORARIO ADJUNTO INCRUSTADO -->
+        <div id="embedded-schedule-container" class="hidden bg-gray-200 border-b border-gray-300 p-4 shrink-0 max-h-[50%] overflow-y-auto relative shadow-inner">
+            <button onclick="app.toggleAttachedView()" class="absolute top-2 right-2 bg-white/80 hover:bg-white text-gray-600 rounded-full p-1 shadow-sm backdrop-blur-sm z-10 transition">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div id="embedded-schedule-content" class="w-full flex justify-center">
+                <!-- El archivo se inyectará aquí -->
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div id="agenda-content" class="flex-1 flex flex-col overflow-hidden bg-white">
+            <!-- Renderizado dinámico aquí -->
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-container"></div>
+
+    <!-- LÓGICA DE LA APLICACIÓN -->
+    <script>
+        // --- CONSTANTES Y DATOS ---
+        const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']; // Array js standard (0=Dom, 1=Lun...)
+        const DIAS_SEMANA_UI = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']; // Para la tabla
+        
+        // Categorías de Bloque Manuales
+        const BLOCK_CATEGORIES = [
+            { id: 'none', label: 'Ninguno (Blanco)', bg: 'bg-transparent', hexBg: '', hexColor: '#000000' },
+            { id: 'work', label: 'Trabajo (Azul Oscuro)', bg: 'bg-blue-600', hexBg: '#2563eb', hexColor: '#ffffff' },
+            { id: 'study', label: 'Estudio (Naranja Sólido)', bg: 'bg-orange-500', hexBg: '#f97316', hexColor: '#ffffff' },
+            { id: 'rest', label: 'Descanso / Libre (Verde Oscuro)', bg: 'bg-emerald-600', hexBg: '#059669', hexColor: '#ffffff' },
+            { id: 'class', label: 'Clase / Universidad (Morado)', bg: 'bg-purple-600', hexBg: '#9333ea', hexColor: '#ffffff' },
+            { id: 'exam', label: 'Examen / Evaluación (Rojo)', bg: 'bg-red-600', hexBg: '#dc2626', hexColor: '#ffffff' },
+            { id: 'personal', label: 'Personal (Cian)', bg: 'bg-cyan-700', hexBg: '#0e7490', hexColor: '#ffffff' }
+        ];
+
+        // Colores para Papelitos y Bases de Turno
+        const COLORES_PAPELITOS = [
+            { id: 'yellow', bg: 'bg-yellow-100', border: 'border-yellow-300', text: 'text-yellow-900', from: 'from-yellow-50', to: 'to-yellow-200', shiftBg: 'bg-yellow-100', shiftHex: '#fef9c3' },
+            { id: 'blue', bg: 'bg-blue-100', border: 'border-blue-300', text: 'text-blue-900', from: 'from-blue-50', to: 'to-blue-200', shiftBg: 'bg-blue-100', shiftHex: '#dbeafe' },
+            { id: 'pink', bg: 'bg-pink-100', border: 'border-pink-300', text: 'text-pink-900', from: 'from-pink-50', to: 'to-pink-200', shiftBg: 'bg-pink-100', shiftHex: '#fce7f3' },
+            { id: 'green', bg: 'bg-green-100', border: 'border-green-300', text: 'text-green-900', from: 'from-green-50', to: 'to-green-200', shiftBg: 'bg-green-100', shiftHex: '#dcfce3' },
+            { id: 'purple', bg: 'bg-purple-100', border: 'border-purple-300', text: 'text-purple-900', from: 'from-purple-50', to: 'to-purple-200', shiftBg: 'bg-purple-100', shiftHex: '#f3e8ff' },
+            { id: 'orange', bg: 'bg-orange-100', border: 'border-orange-300', text: 'text-orange-900', from: 'from-orange-50', to: 'to-orange-200', shiftBg: 'bg-orange-100', shiftHex: '#ffedd5' },
+            { id: 'red', bg: 'bg-red-100', border: 'border-red-300', text: 'text-red-900', from: 'from-red-50', to: 'to-red-200', shiftBg: 'bg-red-100', shiftHex: '#fee2e2' },
+            { id: 'teal', bg: 'bg-teal-100', border: 'border-teal-300', text: 'text-teal-900', from: 'from-teal-50', to: 'to-teal-200', shiftBg: 'bg-teal-100', shiftHex: '#ccfbf1' },
+            { id: 'indigo', bg: 'bg-indigo-100', border: 'border-indigo-300', text: 'text-indigo-900', from: 'from-indigo-50', to: 'to-indigo-200', shiftBg: 'bg-indigo-100', shiftHex: '#e0e7ff' },
+            { id: 'white', bg: 'bg-white', border: 'border-gray-300', text: 'text-gray-800', from: 'from-white', to: 'to-gray-100', shiftBg: 'bg-gray-100', shiftHex: '#f3f4f6' },
+        ];
+        
+        const DESIGNS = [
+            { id: 'classic', label: 'Clásico' },
+            { id: 'gradient', label: 'Gradiente' },
+            { id: 'tape', label: 'Cinta Adhesiva' },
+            { id: 'pin', label: 'Chincheta' },
+            { id: 'shadow', label: 'Sombra 3D' }
+        ];
+        
+        // BLOQUES ACTUALIZADOS AL HORARIO DE LA FOTO (9 Bloques, Profesor Gonzalo Calderón)
+        const SCHEDULE_BLOCKS = [
+            { id: 'c1', type: 'class', label: '1', time: '08:00 - 08:45' },
+            { id: 'c2', type: 'class', label: '2', time: '08:45 - 09:30' },
+            { id: 'c3', type: 'class', label: '3', time: '09:45 - 10:30' },
+            { id: 'c4', type: 'class', label: '4', time: '10:30 - 11:15' },
+            { id: 'c5', type: 'class', label: '5', time: '11:30 - 12:15' },
+            { id: 'c6', type: 'class', label: '6', time: '12:15 - 13:00' },
+            { id: 'c7', type: 'class', label: '7', time: '14:00 - 14:45' },
+            { id: 'c8', type: 'class', label: '8', time: '14:45 - 15:30' },
+            { id: 'c9', type: 'class', label: '9', time: '15:45 - 16:30' },
+        ];
+
+        // HORARIO MATRIZ PREDETERMINADO (1 = Lunes, 2 = Martes, etc.)
+        const BASE_SCHEDULE = {
+            1: { c1: '1º A MATEMÁTICAS', c2: '1º A MATEMÁTICAS', c5: '4º B MATEMÁTICAS', c6: '4º B MATEMÁTICAS', c7: '3º C MATEMÁTICAS', c8: '3º C MATEMÁTICAS', c9: '1º A ORIENTACIÓN' },
+            2: { c2: '3º E MATEMÁTICAS', c3: '3º E MATEMÁTICAS', c5: '3º C MATEMÁTICAS', c6: '3º C MATEMÁTICAS', c8: '4º D MATEMÁTICAS', c9: '4º D MATEMÁTICAS' },
+            3: { c7: '1º A MATEMÁTICAS', c8: '1º A MATEMÁTICAS', c9: '3º D MATEMÁTICAS' },
+            4: { c4: '4º B MATEMÁTICAS', c5: '4º B MATEMÁTICAS', c7: '1º A MATEMÁTICAS', c8: '1º A MATEMÁTICAS', c9: '4º D MATEMÁTICAS' },
+            5: { c1: '3º E MATEMÁTICAS', c2: '3º E MATEMÁTICAS', c3: '3º D MATEMÁTICAS', c4: '3º D MATEMÁTICAS', c5: '1º A MATEMÁTICAS', c6: '1º A MATEMÁTICAS' }
+        };
+
+        // --- ESTADO GLOBAL Y APP ---
+        const app = {
+            // Inicializado en 6 de MAYO de 2026
+            currentDate: new Date(2026, 4, 6), 
+            view: 'week', 
+            notes: [],
+            blockSettings: {}, 
+            hiddenBaseClasses: {}, // Estado para ocultar clases del horario base (Ej. '1_c2' para Lunes Bloque 2)
+            
+            // Configuración Apariencia (Modo Noche / Color)
+            themeMode: 'light',
+            appColor: 'blue',
+
+            // Configuración de Turno Base 
+            shiftConfig: {
+                enabled: false, 
+                workDays: 8,
+                restDays: 6,
+                anchorDate: '2026-04-11', 
+                workColor: 'yellow'
+            },
+            
+            // Configuración Archivo Adjunto
+            attachedFile: null, 
+            showAttachedFile: false,
+
+            exportMenuOpen: false,
+            
+            // Modal state
+            modalOpen: false,
+            modalType: 'note', 
+            editingNoteId: null,
+            modalData: { date: '', blockId: 'c1', text: '', color: 'yellow', design: 'classic', blockCategory: 'none' },
+            shiftFormData: {},
+
+            // --- LOCAL STORAGE ---
+            saveDataLocally() {
+                try {
+                    localStorage.setItem('agenda_escolar_datos_v5', JSON.stringify({
+                        notes: this.notes,
+                        blockSettings: this.blockSettings,
+                        shiftConfig: this.shiftConfig,
+                        attachedFile: this.attachedFile,
+                        hiddenBaseClasses: this.hiddenBaseClasses,
+                        themeMode: this.themeMode,
+                        appColor: this.appColor
+                    }));
+                } catch (e) {
+                    console.error(e);
+                    if(e.name === 'QuotaExceededError') {
+                        alert('El archivo adjunto es demasiado grande para guardarse. Se guardará la agenda, pero el archivo adjunto se removerá.');
+                        this.attachedFile = null;
+                        this.saveDataLocally();
+                    }
+                }
+            },
+            loadDataLocally() {
+                const dataV5 = localStorage.getItem('agenda_escolar_datos_v5');
+                if (dataV5) {
+                    try {
+                        const parsed = JSON.parse(dataV5);
+                        this.notes = parsed.notes || [];
+                        this.blockSettings = parsed.blockSettings || {};
+                        if (parsed.shiftConfig) this.shiftConfig = parsed.shiftConfig;
+                        if (parsed.attachedFile) this.attachedFile = parsed.attachedFile;
+                        if (parsed.hiddenBaseClasses) this.hiddenBaseClasses = parsed.hiddenBaseClasses;
+                        if (parsed.themeMode) this.themeMode = parsed.themeMode;
+                        if (parsed.appColor) this.appColor = parsed.appColor;
+                    } catch (e) { console.error("Error cargando V5", e); }
+                }
+
+                if (this.notes.length === 0) {
+                    // Datos de ejemplo
+                    this.notes = [
+                        { id: '1', date: '2026-05-06', blockId: 'c7', text: 'Repasar fracciones equivalentes.', color: 'yellow', design: 'pin' }
+                    ];
+                    this.blockSettings = {}; 
+                }
+
+                this.applyTheme();
+            },
+
+            // --- LÓGICA DE APARIENCIA (TEMA / COLOR) ---
+            openAppearanceModal() {
+                this.modalType = 'appearance';
+                this.modalOpen = true;
+                this.renderModal();
+            },
+            setThemeMode(mode) {
+                this.themeMode = mode;
+                this.applyTheme();
+                this.saveDataLocally();
+                this.renderModal();
+            },
+            setAppColor(color) {
+                this.appColor = color;
+                this.applyTheme();
+                this.saveDataLocally();
+                this.renderModal();
+            },
+            applyTheme() {
+                let styleTag = document.getElementById('dynamic-theme-styles');
+                if (!styleTag) {
+                    styleTag = document.createElement('style');
+                    styleTag.id = 'dynamic-theme-styles';
+                    document.head.appendChild(styleTag);
+                }
+
+                let css = '';
+                
+                // MODO OSCURO (Sobrescribiendo las clases utilitarias de Tailwind dinámicamente)
+                if (this.themeMode === 'dark') {
+                    css += `
+                        body { background-color: #111827 !important; color: #f3f4f6 !important; }
+                        .bg-white { background-color: #1f2937 !important; border-color: #374151 !important; color: #f3f4f6 !important; }
+                        .bg-gray-50 { background-color: #374151 !important; border-color: #4b5563 !important; }
+                        .bg-gray-100 { background-color: #111827 !important; border-color: #374151 !important; }
+                        .bg-gray-200 { background-color: #374151 !important; border-color: #4b5563 !important; }
+                        .text-gray-800, .text-gray-700 { color: #f9fafb !important; }
+                        .text-gray-600, .text-gray-500 { color: #d1d5db !important; }
+                        .border-gray-200, .border-gray-300 { border-color: #4b5563 !important; }
+                        #embedded-schedule-container { background-color: #1f2937 !important; border-color: #374151 !important; }
+                        input, select, textarea { background-color: #374151 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+                        .shadow-sm, .shadow-md, .shadow-xl { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important; }
+                        .hover\\:bg-gray-50:hover { background-color: #4b5563 !important; }
+                        .hover\\:bg-black\\/5:hover { background-color: rgba(255,255,255,0.1) !important; }
+                    `;
+                }
+
+                // COLOR PRINCIPAL (Mapeando los azules de Tailwind hacia el nuevo color)
+                const colorMaps = {
+                    green: { 
+                        600: '#16a34a', 50: '#f0fdf4', 700: '#15803d', 800: '#166534', 
+                        200: '#bbf7d0', 400: '#4ade80', 500: '#22c55e', 100: '#dcfce3'
+                    },
+                    purple: {
+                        600: '#9333ea', 50: '#faf5ff', 700: '#7e22ce', 800: '#6b21a8',
+                        200: '#e9d5ff', 400: '#c084fc', 500: '#a855f7', 100: '#f3e8ff'
+                    },
+                    orange: {
+                        600: '#ea580c', 50: '#fff7ed', 700: '#c2410c', 800: '#9a3412',
+                        200: '#fed7aa', 400: '#fb923c', 500: '#f97316', 100: '#ffedd5'
+                    },
+                    rose: {
+                        600: '#e11d48', 50: '#fff1f2', 700: '#be123c', 800: '#9f1239',
+                        200: '#fecdd3', 400: '#fb7185', 500: '#f43f5e', 100: '#ffe4e6'
+                    }
+                };
+
+                if (this.appColor !== 'blue' && colorMaps[this.appColor]) {
+                    const map = colorMaps[this.appColor];
+                    css += `
+                        .bg-blue-600 { background-color: ${map[600]} !important; }
+                        .bg-blue-50 { background-color: ${map[50]} !important; }
+                        .bg-blue-100 { background-color: ${map[100]} !important; }
+                        .text-blue-600 { color: ${map[600]} !important; }
+                        .text-blue-700 { color: ${map[700]} !important; }
+                        .text-blue-800 { color: ${map[800]} !important; }
+                        .text-blue-900 { color: ${map[800]} !important; }
+                        .border-blue-100 { border-color: ${map[100]} !important; }
+                        .border-blue-200 { border-color: ${map[200]} !important; }
+                        .border-blue-400 { border-color: ${map[400]} !important; }
+                        .border-blue-500 { border-color: ${map[500]} !important; }
+                        .ring-blue-500 { --tw-ring-color: ${map[500]} !important; }
+                        .hover\\:bg-blue-50:hover { background-color: ${map[50]} !important; }
+                        .hover\\:bg-blue-100:hover { background-color: ${map[100]} !important; }
+                        .hover\\:bg-blue-700:hover { background-color: ${map[700]} !important; }
+                        .hover\\:text-blue-700:hover { color: ${map[700]} !important; }
+                        .hover\\:text-blue-800:hover { color: ${map[800]} !important; }
+                    `;
+                }
+
+                styleTag.innerHTML = css;
+            },
+
+            // --- LÓGICA DE TURNO (SHIFT) ---
+            getShiftStatusForDate(dateStr) {
+                if (!this.shiftConfig.enabled) return { isWork: false, colorId: 'none' };
+                
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const targetDate = new Date(y, m - 1, d);
+                
+                const [ay, am, ad] = this.shiftConfig.anchorDate.split('-').map(Number);
+                const anchorDate = new Date(ay, am - 1, ad);
+                
+                const diffTime = targetDate.getTime() - anchorDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                const workD = parseInt(this.shiftConfig.workDays) || 8;
+                const restD = parseInt(this.shiftConfig.restDays) || 6;
+                const cycle = workD + restD;
+                
+                if (cycle <= 0) return { isWork: false, colorId: 'none' };
+                
+                let pos = diffDays % cycle;
+                if (pos < 0) pos += cycle; 
+                
+                if (pos < workD) {
+                    return { isWork: true, colorId: this.shiftConfig.workColor };
+                }
+                return { isWork: false, colorId: 'none' };
+            },
+
+            // --- ARCHIVO ADJUNTO ---
+            handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                if (file.size > 4 * 1024 * 1024) {
+                    alert("El archivo es muy grande (Máximo recomendado: 4MB). Por favor, intenta subir un archivo más ligero o una imagen comprimida.");
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = e.target.result;
+                    const type = file.type.includes('pdf') ? 'pdf' : 'image';
+                    
+                    this.shiftFormData.attachedFile = { type, data, name: file.name };
+                    this.renderModal(); 
+                };
+                reader.readAsDataURL(file);
+            },
+            removeAttachedFile() {
+                this.shiftFormData.attachedFile = null;
+                this.renderModal();
+            },
+            toggleAttachedView() {
+                this.showAttachedFile = !this.showAttachedFile;
+                this.render();
+            },
+
+            // --- OCULTAR/RESTAURAR CLASE BASE ---
+            toggleBaseClass(baseKey) {
+                if (!this.hiddenBaseClasses) this.hiddenBaseClasses = {};
+                
+                if (this.hiddenBaseClasses[baseKey]) {
+                    delete this.hiddenBaseClasses[baseKey]; // Restaurar
+                } else {
+                    this.hiddenBaseClasses[baseKey] = true; // Ocultar
+                }
+                
+                this.saveDataLocally();
+                this.renderModal(); // Actualizar botón en el modal instantáneamente
+                this.render(); // Actualizar interfaz de fondo
+            },
+
+            // Utils
+            getFormattedDate(date) {
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            },
+            getDaysInMonth(year, month) {
+                return new Date(year, month + 1, 0).getDate();
+            },
+            getFirstDayOfMonth(year, month) {
+                const day = new Date(year, month, 1).getDay();
+                return day === 0 ? 6 : day - 1; 
+            },
+            getWeekDates(currentDate) {
+                const currentDay = currentDate.getDay();
+                const diff = currentDate.getDate() - currentDay + (currentDay === 0 ? -6 : 1);
+                const monday = new Date(new Date(currentDate).setDate(diff));
+                const weekDates = [];
+                for (let i = 0; i < 7; i++) {
+                    weekDates.push(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i));
+                }
+                return weekDates;
+            },
+            getColorConfig(colorId) {
+                return COLORES_PAPELITOS.find(c => c.id === colorId) || COLORES_PAPELITOS[0];
+            },
+
+            // --- NAVEGACIÓN ---
+            nextPeriod() {
+                if (this.view === 'month') {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+                } else {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate() + 7);
+                }
+                this.render();
+            },
+            prevPeriod() {
+                if (this.view === 'month') {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+                } else {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), this.currentDate.getDate() - 7);
+                }
+                this.render();
+            },
+            goToToday() {
+                this.currentDate = new Date();
+                this.render();
+            },
+            setView(newView) {
+                this.view = newView;
+                this.render();
+            },
+            changeDateAndGoToWeek(year, month, day) {
+                this.currentDate = new Date(year, month, day);
+                this.view = 'week';
+                this.render();
+            },
+
+            // --- MODALES Y NOTAS ---
+            openShiftModal() {
+                this.modalType = 'shift';
+                this.shiftFormData = { ...this.shiftConfig, attachedFile: this.attachedFile };
+                this.modalOpen = true;
+                this.renderModal();
+            },
+            setShiftModalColor(colorId) {
+                this.shiftFormData.workColor = colorId;
+                document.querySelectorAll('.shift-color-btn').forEach(btn => {
+                    const cConfig = this.getColorConfig(btn.dataset.color);
+                    if(btn.dataset.color === colorId) {
+                        btn.className = `shift-color-btn w-8 h-8 rounded-full border-2 ${cConfig.bg} ${cConfig.border} ring-2 ring-offset-2 ring-blue-500 scale-110 transition-all`;
+                    } else {
+                        btn.className = `shift-color-btn w-8 h-8 rounded-full border-2 ${cConfig.bg} ${cConfig.border} opacity-70 hover:opacity-100 hover:scale-105 transition-all`;
+                    }
+                });
+            },
+            saveShiftConfig() {
+                this.shiftFormData.enabled = document.getElementById('shift-enabled').checked;
+                this.shiftFormData.workDays = document.getElementById('shift-work').value;
+                this.shiftFormData.restDays = document.getElementById('shift-rest').value;
+                this.shiftFormData.anchorDate = document.getElementById('shift-anchor').value;
+                
+                this.shiftConfig = { ...this.shiftFormData };
+                this.attachedFile = this.shiftFormData.attachedFile; 
+                delete this.shiftConfig.attachedFile; 
+                
+                this.saveDataLocally();
+                this.closeModal();
+                this.render();
+            },
+
+            openModalToCreate(dateStr, blockId) {
+                const cellKey = `${dateStr}_${blockId}`;
+                const currentCategory = this.blockSettings[cellKey] || 'none';
+                
+                this.modalType = 'note';
+                this.editingNoteId = null;
+                this.modalData = { 
+                    date: dateStr, 
+                    blockId: blockId || 'c1', 
+                    text: '', 
+                    color: 'yellow', 
+                    design: 'classic',
+                    blockCategory: currentCategory
+                };
+                this.modalOpen = true;
+                this.renderModal();
+            },
+            openModalToEdit(noteId) {
+                const note = this.notes.find(n => n.id === noteId);
+                if (note) {
+                    const cellKey = `${note.date}_${note.blockId}`;
+                    const currentCategory = this.blockSettings[cellKey] || 'none';
+
+                    this.modalType = 'note';
+                    this.editingNoteId = note.id;
+                    this.modalData = { 
+                        ...note, 
+                        design: note.design || 'classic',
+                        blockCategory: currentCategory
+                    };
+                    this.modalOpen = true;
+                    this.renderModal();
+                }
+            },
+            closeModal() {
+                this.modalOpen = false;
+                this.renderModal();
+            },
+            setModalColor(colorId) {
+                this.modalData.color = colorId;
+                this.updateModalPreview();
+            },
+            setModalDesign(designId) {
+                this.modalData.design = designId;
+                this.updateModalPreview();
+            },
+            updateModalPreview() {
+                if(this.modalType !== 'note') return;
+
+                const colorConfig = this.getColorConfig(this.modalData.color);
+                const design = this.modalData.design;
+                
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    if(btn.dataset.color === this.modalData.color) {
+                        btn.className = `color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 ${colorConfig.bg} ${colorConfig.border} ring-2 ring-offset-2 ring-gray-400 scale-110 transition-all`;
+                    } else {
+                        const btnColorConfig = this.getColorConfig(btn.dataset.color);
+                        btn.className = `color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 ${btnColorConfig.bg} ${btnColorConfig.border} opacity-80 hover:opacity-100 hover:scale-105 transition-all`;
+                    }
+                });
+
+                document.querySelectorAll('.design-btn').forEach(btn => {
+                    if(btn.dataset.design === design) {
+                        btn.className = `design-btn px-2 md:px-3 py-1 text-xs font-semibold border-2 rounded-md transition-all bg-blue-50 text-blue-700 border-blue-400`;
+                    } else {
+                        btn.className = `design-btn px-2 md:px-3 py-1 text-xs border border-gray-300 text-gray-600 bg-white hover:bg-gray-50 rounded-md transition-all`;
+                    }
+                });
+                
+                const textarea = document.getElementById('modal-text');
+                const textareaWrapper = document.getElementById('modal-text-wrapper');
+                if(!textarea) return;
+
+                let wrapClasses = `relative w-full rounded-lg transition-all `;
+                let txtClasses = `w-full border-0 p-2 md:p-3 text-sm md:text-base ${colorConfig.text} min-h-[80px] md:min-h-[100px] outline-none resize-none focus:ring-0 bg-transparent relative z-10`;
+                let decoratorsHtml = '';
+
+                if (design === 'gradient') {
+                    wrapClasses += `bg-gradient-to-br ${colorConfig.from} ${colorConfig.to} border ${colorConfig.border}`;
+                } else if (design === 'tape') {
+                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                    decoratorsHtml = `<div class="absolute top-[-6px] left-1/2 transform -translate-x-1/2 w-8 h-3 bg-white/60 rotate-[-3deg] shadow-sm z-20 pointer-events-none"></div>`;
+                } else if (design === 'pin') {
+                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                    decoratorsHtml = `<div class="absolute top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 rounded-full bg-red-500 shadow-sm z-20 border border-red-700 pointer-events-none"></div>`;
+                    txtClasses += ` pt-4`;
+                } else if (design === 'shadow') {
+                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border} shadow-md`;
+                } else {
+                    wrapClasses += `${colorConfig.bg} border ${colorConfig.border}`;
+                }
+
+                textareaWrapper.className = wrapClasses;
+                textarea.className = txtClasses;
+                
+                const existingDecorators = textareaWrapper.querySelectorAll('.decorator');
+                existingDecorators.forEach(el => el.remove());
+                if(decoratorsHtml) textareaWrapper.insertAdjacentHTML('afterbegin', `<div class="decorator">${decoratorsHtml}</div>`);
+            },
+            saveNote() {
+                const text = document.getElementById('modal-text').value;
+                const date = document.getElementById('modal-date').value;
+                const blockId = document.getElementById('modal-block').value;
+                const category = document.getElementById('modal-block-category').value;
+                
+                if (!date || !blockId) return;
+
+                const cellKey = `${date}_${blockId}`;
+                if (category === 'none') {
+                    delete this.blockSettings[cellKey];
+                } else {
+                    this.blockSettings[cellKey] = category;
+                }
+
+                if (text.trim() === '') {
+                    if (this.editingNoteId) this.notes = this.notes.filter(n => n.id !== this.editingNoteId);
+                } else {
+                    this.modalData.text = text;
+                    this.modalData.date = date;
+                    this.modalData.blockId = blockId;
+                    
+                    const noteToSave = {...this.modalData};
+                    delete noteToSave.blockCategory; 
+
+                    if (this.editingNoteId) {
+                        this.notes = this.notes.map(n => n.id === this.editingNoteId ? { ...noteToSave, id: n.id } : n);
+                    } else {
+                        this.notes.push({ ...noteToSave, id: Date.now().toString() });
+                    }
+                }
+                
+                this.saveDataLocally(); 
+                this.closeModal();
+                this.render();
+            },
+            deleteNote() {
+                if (this.editingNoteId) {
+                    this.notes = this.notes.filter(n => n.id !== this.editingNoteId);
+                }
+                this.saveDataLocally(); 
+                this.closeModal();
+                this.render();
+            },
+
+            // --- EXPORTACIÓN ---
+            toggleExportMenu() {
+                this.exportMenuOpen = !this.exportMenuOpen;
+                const menu = document.getElementById('export-menu');
+                if (this.exportMenuOpen) {
+                    menu.classList.remove('hidden');
+                } else {
+                    menu.classList.add('hidden');
+                }
+            },
+            generateHTMLTableForExport() {
+                const weekDates = this.getWeekDates(new Date(this.currentDate.getTime()));
+                let html = `<table border="1" style="border-collapse: collapse; width: 100%; font-family: sans-serif; min-width: 800px;">`;
+                
+                // Header (Bloques como columnas)
+                html += `<tr><th style="background-color: #f3f4f6; padding: 8px; width: 120px;">Día / Fecha</th>`;
+                SCHEDULE_BLOCKS.forEach((block) => {
+                    html += `<th style="background-color: #f3f4f6; padding: 8px; text-align: center;"><b>Bloque ${block.label}</b><br/><span style="font-size: 11px;">${block.time}</span></th>`;
+                });
+                html += `</tr>`;
+
+                // Filas (Días de la semana)
+                weekDates.forEach((date, i) => {
+                    const dateStr = this.getFormattedDate(date);
+                    const shift = this.getShiftStatusForDate(dateStr);
+                    const dayOfWeek = date.getDay();
+                    
+                    let rowBg = '#ffffff';
+                    if (shift.isWork) {
+                        rowBg = this.getColorConfig(shift.colorId).shiftHex;
+                    }
+
+                    html += `<tr><td style="padding: 8px; text-align: center; vertical-align: middle; background-color: ${rowBg}; font-weight: bold;">${DIAS_SEMANA_UI[i]}<br/>${date.getDate()}/${date.getMonth()+1}</td>`;
+                    
+                    SCHEDULE_BLOCKS.forEach(block => {
+                        const cellKey = `${dateStr}_${block.id}`;
+                        const catId = this.blockSettings[cellKey] || 'none';
+                        const catConfig = BLOCK_CATEGORIES.find(c => c.id === catId) || BLOCK_CATEGORIES[0];
+                        
+                        let bgHtmlColor = '#ffffff';
+                        let textHtmlColor = '#000000';
+                        
+                        if (catId !== 'none') {
+                            bgHtmlColor = catConfig.hexBg;
+                            textHtmlColor = catConfig.hexColor;
+                        } else if (shift.isWork) {
+                            bgHtmlColor = this.getColorConfig(shift.colorId).shiftHex;
+                        }
+                        
+                        const cellNotes = this.notes.filter(n => n.date === dateStr && n.blockId === block.id);
+                        
+                        html += `<td style="padding: 8px; vertical-align: top; text-align: center; background-color: ${bgHtmlColor}; color: ${textHtmlColor};">`;
+                        
+                        // Agregar clase base si existe (Exportación) y no está oculta
+                        const baseKey = `${dayOfWeek}_${block.id}`;
+                        const baseClass = (!this.hiddenBaseClasses || !this.hiddenBaseClasses[baseKey]) && BASE_SCHEDULE[dayOfWeek] && BASE_SCHEDULE[dayOfWeek][block.id] ? BASE_SCHEDULE[dayOfWeek][block.id] : null;
+
+                        if (baseClass) {
+                            html += `<div style="font-size: 10px; font-weight: bold; background: #e5e7eb; color: #374151; padding: 2px 4px; border-radius: 3px; margin-bottom: 4px; border: 1px solid #d1d5db;">${baseClass}</div>`;
+                        }
+
+                        if (catId !== 'none') {
+                            html += `<b>[${catConfig.label.split(' ')[0]}]</b><br>`;
+                        }
+                        
+                        cellNotes.forEach(note => {
+                            const safeText = note.text.replace(/\n/g, '<br/>'); 
+                            const noteColor = this.getColorConfig(note.color);
+                            html += `<div style="background-color: #ffffff; color: #1f2937; padding: 6px; margin-top: 6px; border: 1px solid #d1d5db; border-radius: 4px; text-align: left; font-size: 12px; box-shadow: 1px 1px 3px rgba(0,0,0,0.1); border-left: 4px solid ${noteColor.shiftHex};">${safeText}</div>`;
+                        });
+                        
+                        html += `</td>`;
+                    });
+                    html += `</tr>`;
+                });
+                html += `</table>`;
+                return html;
+            },
+            exportWord() {
+                const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Agenda Escolar</title></head><body>";
+                const footer = "</body></html>";
+                const sourceHTML = header + "<h2>Agenda Escolar</h2>" + this.generateHTMLTableForExport() + footer;
+                const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+                const fileDownload = document.createElement("a");
+                document.body.appendChild(fileDownload);
+                fileDownload.href = source;
+                fileDownload.download = 'Agenda.doc';
+                fileDownload.click();
+                document.body.removeChild(fileDownload);
+                this.exportMenuOpen = false;
+                document.getElementById('export-menu').classList.add('hidden');
+            },
+            exportExcel() {
+                const table = this.generateHTMLTableForExport();
+                const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>{table}</body></html>';
+                const base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))) };
+                const format = function(s, c) { return s.replace(/{(\w+)}/g, function(m, p) { return c[p]; }) };
+                const ctx = {worksheet: 'Agenda', table: table};
+                const uri = 'data:application/vnd.ms-excel;base64,';
+                const link = document.createElement("a");
+                link.download = "Agenda.xls";
+                link.href = uri + base64(format(template, ctx));
+                link.click();
+                this.exportMenuOpen = false;
+                document.getElementById('export-menu').classList.add('hidden');
+            },
+            async exportJPG() {
+                this.exportMenuOpen = false;
+                document.getElementById('export-menu').classList.add('hidden');
+                
+                const contentContainer = document.getElementById('agenda-content');
+                const scrollableArea = contentContainer.querySelector('.custom-scrollbar') || contentContainer;
+                
+                const originalStyles = {
+                    width: scrollableArea.style.width,
+                    height: scrollableArea.style.height,
+                    overflow: scrollableArea.style.overflow,
+                };
+
+                scrollableArea.style.width = 'max-content';
+                scrollableArea.style.height = 'max-content';
+                scrollableArea.style.overflow = 'visible';
+
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                try {
+                    const canvas = await html2canvas(scrollableArea, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff'
+                    });
+                    
+                    const data = canvas.toDataURL('image/jpeg', 0.9);
+                    const link = document.createElement('a');
+                    link.href = data;
+                    link.download = 'Agenda_Escolar.jpg';
+                    link.click();
+                } catch (error) {
+                    console.error("Error al exportar JPG:", error);
+                    alert("Ocurrió un error al crear la imagen.");
+                } finally {
+                    scrollableArea.style.width = originalStyles.width;
+                    scrollableArea.style.height = originalStyles.height;
+                    scrollableArea.style.overflow = originalStyles.overflow;
+                }
+            },
+
+            // --- FUNCIONES DE RENDERIZADO ---
+            
+            renderHeader() {
+                document.getElementById('header-date-text').innerText = `${MESES[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+                
+                const btnMonth = document.getElementById('btn-view-month');
+                const btnWeek = document.getElementById('btn-view-week');
+                
+                if (this.view === 'month') {
+                    btnMonth.className = "px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 bg-white text-blue-700 shadow-sm";
+                    btnWeek.className = "px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 text-gray-500 hover:text-gray-700";
+                } else {
+                    btnMonth.className = "px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 text-gray-500 hover:text-gray-700";
+                    btnWeek.className = "px-2.5 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium rounded-md transition-all flex items-center gap-1.5 md:gap-2 bg-white text-blue-700 shadow-sm";
+                }
+
+                // Controlar visibilidad del botón de Archivo Adjunto en Header
+                const attachBtnContainer = document.getElementById('attached-btn-container');
+                const attachBtnText = document.getElementById('attached-btn-text');
+                
+                if(this.attachedFile) {
+                    attachBtnContainer.classList.remove('hidden');
+                    if(this.showAttachedFile) {
+                        attachBtnText.innerText = "Ocultar Horario";
+                    } else {
+                        attachBtnText.innerText = "Ver Horario";
+                    }
+                } else {
+                    attachBtnContainer.classList.add('hidden');
+                    this.showAttachedFile = false; // reset state
+                }
+            },
+
+            renderEmbeddedSchedule() {
+                const embeddedContainer = document.getElementById('embedded-schedule-container');
+                const embeddedContent = document.getElementById('embedded-schedule-content');
+                
+                if (this.showAttachedFile && this.attachedFile) {
+                    embeddedContainer.classList.remove('hidden');
+                    if (this.attachedFile.type === 'image') {
+                        embeddedContent.innerHTML = `<img src="${this.attachedFile.data}" alt="Horario Adjunto" class="max-w-full h-auto max-h-[300px] object-contain rounded shadow-md border border-gray-300">`;
+                    } else if (this.attachedFile.type === 'pdf') {
+                        embeddedContent.innerHTML = `<iframe src="${this.attachedFile.data}" class="w-full h-full min-h-[350px] border border-gray-300 rounded shadow-md"></iframe>`;
+                    }
+                } else {
+                    embeddedContainer.classList.add('hidden');
+                    embeddedContent.innerHTML = '';
+                }
+            },
+
+            generateNoteHtml(note, isMonthView = false) {
+                const colorConfig = this.getColorConfig(note.color);
+                const design = note.design || 'classic';
+                
+                let containerClasses = isMonthView 
+                    ? `text-[9px] md:text-xs p-1 md:p-1.5 rounded border shadow-sm mb-0.5 md:mb-1 relative overflow-hidden `
+                    : `p-1 md:p-2 rounded-md border transform hover:scale-[1.02] transition-all flex flex-col mb-1 relative overflow-hidden h-max `;
+                    
+                let extraElements = '';
+                
+                if (design === 'gradient') {
+                    containerClasses += `bg-gradient-to-br ${colorConfig.from} ${colorConfig.to} ${colorConfig.border} shadow-sm`;
+                } else if (design === 'tape') {
+                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-sm`;
+                    if (!isMonthView) extraElements = `<div class="absolute top-[-4px] left-1/2 transform -translate-x-1/2 w-6 h-2 bg-white/60 rotate-[-3deg] shadow-[0_1px_1px_rgba(0,0,0,0.1)] z-10"></div>`;
+                } else if (design === 'pin') {
+                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-md`;
+                    containerClasses += isMonthView ? ' pt-2' : ' pt-2 md:pt-3';
+                    if (!isMonthView) extraElements = `<div class="absolute top-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500 shadow-[0_1px_2px_rgba(0,0,0,0.4)] z-10 border border-red-700"></div>`;
+                } else if (design === 'shadow') {
+                    containerClasses += `${colorConfig.bg} ${colorConfig.border} shadow-[3px_4px_5px_rgba(0,0,0,0.15)] rotate-1`;
+                } else {
+                    containerClasses += `${colorConfig.bg} ${colorConfig.border} ${isMonthView ? '' : 'shadow-[1px_2px_3px_rgba(0,0,0,0.05)]'}`;
+                }
+                
+                const textClasses = isMonthView 
+                    ? `${colorConfig.text} whitespace-pre-wrap break-words` 
+                    : `text-[9px] md:text-xs font-medium leading-tight whitespace-pre-wrap break-words ${colorConfig.text} relative z-0`;
+
+                return `
+                    <div onclick="event.stopPropagation(); app.openModalToEdit('${note.id}')" class="${containerClasses}">
+                        ${extraElements}
+                        <p class="${textClasses}">${note.text}</p>
+                    </div>
+                `;
+            },
+
+            renderMonth() {
+                const year = this.currentDate.getFullYear();
+                const month = this.currentDate.getMonth();
+                const daysInMonth = this.getDaysInMonth(year, month);
+                const firstDay = this.getFirstDayOfMonth(year, month);
+                const todayStr = this.getFormattedDate(new Date());
+
+                let blanksHtml = '';
+                for (let i = 0; i < firstDay; i++) {
+                    blanksHtml += `<div class="bg-gray-50 border-b border-r border-gray-200"></div>`;
+                }
+
+                let daysHtml = '';
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dateObj = new Date(year, month, i);
+                    const dateStr = this.getFormattedDate(dateObj);
+                    const isToday = dateStr === todayStr;
+                    const shift = this.getShiftStatusForDate(dateStr);
+                    const dayOfWeek = dateObj.getDay(); 
+                    
+                    let dayBgClass = isToday ? 'bg-blue-50/80 border-2 border-blue-400' : 'bg-white hover:bg-gray-50';
+                    if (shift.isWork) {
+                        const shiftColorConfig = this.getColorConfig(shift.colorId);
+                        dayBgClass = `${shiftColorConfig.shiftBg} hover:brightness-95 border border-${shiftColorConfig.border.split('-')[1]}-200`;
+                        if (isToday) dayBgClass += ' border-2 border-blue-500 shadow-inner';
+                    }
+
+                    let dayBlocksHtml = '';
+                    SCHEDULE_BLOCKS.forEach(block => {
+                        const cellKey = `${dateStr}_${block.id}`;
+                        const catId = this.blockSettings[cellKey] || 'none';
+                        const blockNotes = this.notes.filter(n => n.date === dateStr && n.blockId === block.id);
+                        
+                        // Evaluar si existe baseClass y si no está oculta por el usuario
+                        const baseKey = `${dayOfWeek}_${block.id}`;
+                        const baseClass = (!this.hiddenBaseClasses || !this.hiddenBaseClasses[baseKey]) && BASE_SCHEDULE[dayOfWeek] && BASE_SCHEDULE[dayOfWeek][block.id] ? BASE_SCHEDULE[dayOfWeek][block.id] : null;
+                        
+                        if (catId !== 'none' || blockNotes.length > 0 || baseClass) {
+                            const catConfig = BLOCK_CATEGORIES.find(c => c.id === catId) || BLOCK_CATEGORIES[0];
+                            const blockBg = catId === 'none' ? 'bg-transparent' : catConfig.bg;
+                            const blockText = catId === 'none' ? 'text-gray-500' : 'text-white font-bold';
+                            
+                            let notesHtml = blockNotes.map(note => this.generateNoteHtml(note, true)).join('');
+                            
+                            // Mostrar la clase base si la hay
+                            let baseClassHtml = '';
+                            if (baseClass) {
+                                baseClassHtml = `<div class="text-[8px] font-bold text-blue-900 bg-blue-100/80 border border-blue-200 px-1 py-0.5 rounded shadow-sm text-center mb-0.5 truncate">${baseClass}</div>`;
+                            }
+                            
+                            dayBlocksHtml += `
+                                <div onclick="event.stopPropagation(); app.openModalToCreate('${dateStr}', '${block.id}')"
+                                     class="mb-1 p-1 rounded border ${catId === 'none' ? 'border-gray-200' : 'border-transparent shadow-sm'} ${blockBg} hover:brightness-95 transition-all cursor-pointer">
+                                    <div class="text-[8px] md:text-[10px] mb-0.5 leading-tight ${blockText} flex justify-between">
+                                        <span>${block.time}</span>
+                                        ${catId !== 'none' ? `<span>${catConfig.label.split(' ')[0]}</span>` : ''}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        ${baseClassHtml}
+                                        ${notesHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    daysHtml += `
+                        <div class="min-h-[100px] md:min-h-[140px] border-b border-r border-gray-200 p-1 md:p-2 flex flex-col transition-colors relative group ${dayBgClass}">
+                            <div class="flex justify-between items-start mb-1">
+                                <button onclick="event.stopPropagation(); app.changeDateAndGoToWeek(${year}, ${month}, ${i})" 
+                                        class="text-[9px] md:text-xs text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity" title="Ir a la Semana">
+                                        <i data-lucide="external-link" class="w-3 h-3 md:w-4 md:h-4"></i>
+                                </button>
+                                <div onclick="app.changeDateAndGoToWeek(${year}, ${month}, ${i})" class="text-right text-xs md:text-sm cursor-pointer ${isToday && !shift.isWork ? 'font-bold text-blue-600' : 'font-semibold text-gray-700'}">
+                                    ${isToday ? `<span class="bg-blue-600 text-white rounded-full w-5 h-5 md:w-6 md:h-6 inline-flex items-center justify-center">${i}</span>` : i}
+                                </div>
+                            </div>
+                            <div class="flex-1 space-y-1 overflow-y-auto pr-1">
+                                ${dayBlocksHtml}
+                            </div>
+                            <div onclick="app.openModalToCreate('${dateStr}', 'c1')" class="mt-1 flex items-center justify-center text-gray-400 hover:text-blue-600 cursor-pointer p-0.5 rounded hover:bg-black/5 transition-colors opacity-0 group-hover:opacity-100">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="flex-1 flex flex-col bg-gray-200 border-t border-l border-gray-200 rounded-b-lg overflow-hidden shadow-inner w-full overflow-x-auto overflow-y-auto custom-scrollbar">
+                        <div class="min-w-[700px] md:min-w-0 w-full flex-1 flex flex-col h-max">
+                            <div class="grid grid-cols-7 bg-white border-b border-gray-300 sticky top-0 z-10 shadow-sm">
+                                ${DIAS_SEMANA_UI.map(dia => `
+                                    <div class="py-2 md:py-3 text-center text-[10px] md:text-sm font-semibold text-gray-700 border-r border-gray-200">
+                                        <span class="md:hidden">${dia.slice(0,3)}</span>
+                                        <span class="hidden md:inline">${dia}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="grid grid-cols-7 flex-1 bg-gray-200 gap-px">
+                                ${blanksHtml}
+                                ${daysHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderWeek() {
+                const weekDates = this.getWeekDates(new Date(this.currentDate.getTime()));
+                const todayStr = this.getFormattedDate(new Date());
+
+                // HEADER INVERTIDO: Ahora las columnas son los Bloques de Clases
+                let headerHtml = `
+                    <div class="sticky top-0 z-30 flex border-b border-gray-300 bg-white shadow-sm w-full min-w-[900px] md:min-w-0">
+                        <div class="sticky left-0 z-40 w-20 md:w-32 flex-shrink-0 border-r border-gray-300 bg-gray-100 flex flex-col items-center justify-center p-1 md:p-2 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                            <i data-lucide="calendar-days" class="w-4 h-4 md:w-5 md:h-5 text-gray-400 mb-1"></i>
+                            <span class="text-[8px] md:text-[10px] font-bold text-gray-500 uppercase tracking-wider">Día / Bloque</span>
+                        </div>
+                        <div class="flex-1 grid" style="grid-template-columns: repeat(${SCHEDULE_BLOCKS.length}, minmax(0, 1fr));">
+                            ${SCHEDULE_BLOCKS.map(block => `
+                                <div class="p-1 md:p-2 text-center border-r border-gray-200 transition-colors bg-white flex flex-col justify-center">
+                                    <div class="text-[10px] md:text-xs font-bold text-gray-800 uppercase tracking-wider">B. ${block.label}</div>
+                                    <div class="text-[8px] md:text-[10px] font-medium text-gray-500 mt-0.5">${block.time}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // BODY INVERTIDO: Ahora las filas son los Días de la Semana
+                let bodyHtml = weekDates.map((date, i) => {
+                    const dateStr = this.getFormattedDate(date);
+                    const isToday = dateStr === todayStr;
+                    const shift = this.getShiftStatusForDate(dateStr);
+                    const dayOfWeek = date.getDay(); // 0 Dom, 1 Lun
+                    
+                    // Fondo de la fila completa si hay turno activo
+                    let rowBgClass = 'bg-white';
+                    if (shift.isWork) {
+                        rowBgClass = this.getColorConfig(shift.colorId).shiftBg;
+                    }
+
+                    let colsHtml = SCHEDULE_BLOCKS.map(block => {
+                        const cellKey = `${dateStr}_${block.id}`;
+                        const catId = this.blockSettings[cellKey] || 'none';
+                        const catConfig = BLOCK_CATEGORIES.find(c => c.id === catId) || BLOCK_CATEGORIES[0];
+                        
+                        let bgClass = 'hover:bg-black/5';
+                        if (catId !== 'none') {
+                            bgClass = `${catConfig.bg} hover:brightness-95 shadow-inner`;
+                        } else if (shift.isWork) {
+                            const shiftColorConfig = this.getColorConfig(shift.colorId);
+                            bgClass = `${shiftColorConfig.shiftBg} hover:brightness-95`;
+                        }
+
+                        // Generar UI para el horario predeterminado si no está oculto
+                        const baseKey = `${dayOfWeek}_${block.id}`;
+                        const baseClass = (!this.hiddenBaseClasses || !this.hiddenBaseClasses[baseKey]) && BASE_SCHEDULE[dayOfWeek] && BASE_SCHEDULE[dayOfWeek][block.id] ? BASE_SCHEDULE[dayOfWeek][block.id] : null;
+                        
+                        let baseClassHtml = '';
+                        if (baseClass) {
+                            baseClassHtml = `<div class="text-[9px] md:text-[10px] font-bold text-blue-900 bg-blue-100 border border-blue-200 px-1 py-0.5 rounded shadow-sm text-center mb-1 w-full truncate relative z-10 opacity-90">${baseClass}</div>`;
+                        }
+
+                        const cellNotes = this.notes.filter(n => n.date === dateStr && n.blockId === block.id);
+                        let notesHtml = cellNotes.map(note => this.generateNoteHtml(note, false)).join('');
+
+                        return `
+                            <div onclick="app.openModalToCreate('${dateStr}', '${block.id}')"
+                                 class="relative min-h-[80px] md:min-h-[100px] border-r border-b border-gray-200 p-1 md:p-1.5 cursor-pointer transition-all group ${bgClass}">
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-0">
+                                     <div class="bg-white/80 p-1 md:p-1.5 rounded-full shadow-md backdrop-blur-sm">
+                                         <i data-lucide="plus" class="w-4 h-4 md:w-6 md:h-6 text-gray-800"></i>
+                                     </div>
+                                </div>
+                                <div class="relative z-10 flex flex-col h-full gap-0.5 md:gap-1.5 justify-start">
+                                    ${baseClassHtml}
+                                    ${notesHtml}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="flex w-full min-w-[900px] md:min-w-0 ${rowBgClass}">
+                            <div class="sticky left-0 z-20 w-20 md:w-32 flex-shrink-0 border-r border-b border-gray-300 p-1 md:p-2 flex flex-col justify-center items-center text-center bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                                <span class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider">${DIAS_SEMANA_UI[i]}</span>
+                                <span class="text-sm md:text-xl mt-0.5 md:mt-1 ${isToday ? 'font-bold text-blue-600 bg-blue-100/80 rounded-full w-7 h-7 md:w-10 md:h-10 flex items-center justify-center mx-auto ring-2 ring-blue-500' : 'text-gray-800 font-semibold'}">${date.getDate()}</span>
+                            </div>
+                            <div class="flex-1 grid" style="grid-template-columns: repeat(${SCHEDULE_BLOCKS.length}, minmax(0, 1fr));">
+                                ${colsHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="flex-1 overflow-x-auto overflow-y-auto bg-white rounded-b-lg shadow-inner relative custom-scrollbar">
+                        <div class="flex flex-col min-w-max md:min-w-0 h-max">
+                            ${headerHtml}
+                            ${bodyHtml}
+                        </div>
+                    </div>
+                `;
+            },
+
+            renderModal() {
+                const container = document.getElementById('modal-container');
+                if (!this.modalOpen) {
+                    container.innerHTML = '';
+                    return;
+                }
+
+                if (this.modalType === 'appearance') {
+                    container.innerHTML = `
+                        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in duration-200 flex flex-col">
+                                <div class="bg-blue-50 px-5 py-4 border-b border-blue-100 flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-blue-800 flex items-center gap-2">
+                                        <i data-lucide="palette" class="w-5 h-5"></i> Personalizar Apariencia
+                                    </h3>
+                                    <button onclick="app.closeModal()" class="text-blue-400 hover:text-blue-700 p-1 bg-white hover:bg-blue-100 rounded-full transition">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="p-5 space-y-6">
+                                    <!-- Theme Mode -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Modo de Visualización</label>
+                                        <div class="flex gap-2">
+                                            <button onclick="app.setThemeMode('light')" class="flex-1 py-2 px-3 border-2 rounded-lg flex items-center justify-center gap-2 font-bold transition-all ${this.themeMode === 'light' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}">
+                                                <i data-lucide="sun" class="w-4 h-4"></i> Día
+                                            </button>
+                                            <button onclick="app.setThemeMode('dark')" class="flex-1 py-2 px-3 border-2 rounded-lg flex items-center justify-center gap-2 font-bold transition-all ${this.themeMode === 'dark' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}">
+                                                <i data-lucide="moon" class="w-4 h-4"></i> Noche
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- App Color -->
+                                    <div>
+                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">Color Principal</label>
+                                        <div class="flex gap-3 justify-center">
+                                            <button onclick="app.setAppColor('blue')" class="w-10 h-10 rounded-full bg-[#2563eb] border-2 ${this.appColor === 'blue' ? 'border-gray-800 scale-110 shadow-lg' : 'border-transparent hover:scale-105'} transition-all" title="Azul"></button>
+                                            <button onclick="app.setAppColor('green')" class="w-10 h-10 rounded-full bg-[#16a34a] border-2 ${this.appColor === 'green' ? 'border-gray-800 scale-110 shadow-lg' : 'border-transparent hover:scale-105'} transition-all" title="Verde"></button>
+                                            <button onclick="app.setAppColor('purple')" class="w-10 h-10 rounded-full bg-[#9333ea] border-2 ${this.appColor === 'purple' ? 'border-gray-800 scale-110 shadow-lg' : 'border-transparent hover:scale-105'} transition-all" title="Morado"></button>
+                                            <button onclick="app.setAppColor('orange')" class="w-10 h-10 rounded-full bg-[#ea580c] border-2 ${this.appColor === 'orange' ? 'border-gray-800 scale-110 shadow-lg' : 'border-transparent hover:scale-105'} transition-all" title="Naranja"></button>
+                                            <button onclick="app.setAppColor('rose')" class="w-10 h-10 rounded-full bg-[#e11d48] border-2 ${this.appColor === 'rose' ? 'border-gray-800 scale-110 shadow-lg' : 'border-transparent hover:scale-105'} transition-all" title="Rosa"></button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="px-5 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                                    <button onclick="app.closeModal()" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm w-full">Listo</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (this.modalType === 'shift') {
+                    const sd = this.shiftFormData;
+                    
+                    let shiftColorOptions = COLORES_PAPELITOS.map(c => `
+                        <button type="button" 
+                                data-color="${c.id}"
+                                onclick="app.setShiftModalColor('${c.id}')"
+                                class="shift-color-btn w-8 h-8 rounded-full border-2 ${c.bg} ${c.border} ${sd.workColor === c.id ? 'ring-2 ring-offset-2 ring-blue-500 scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'} transition-all"></button>
+                    `).join('');
+
+                    // UI de Archivo Adjunto dentro del Modal
+                    let attachedFileIndicator = '';
+                    if (sd.attachedFile) {
+                        attachedFileIndicator = `
+                            <div class="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between shadow-sm">
+                                <span class="text-xs text-green-700 font-semibold truncate flex items-center gap-1">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> Adjunto: ${sd.attachedFile.name || 'Horario subido'}
+                                </span>
+                                <button type="button" onclick="app.removeAttachedFile()" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded" title="Eliminar archivo">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    container.innerHTML = `
+                        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in duration-200 transform transition-all flex flex-col">
+                                <div class="bg-blue-50 px-5 py-4 border-b border-blue-100 flex items-center justify-between">
+                                    <h3 class="text-lg font-bold text-blue-800 flex items-center gap-2">
+                                        <i data-lucide="settings-2" class="w-5 h-5"></i> Configurar Turno Base
+                                    </h3>
+                                    <button onclick="app.closeModal()" class="text-blue-400 hover:text-blue-700 p-1 bg-white hover:bg-blue-100 rounded-full transition">
+                                        <i data-lucide="x" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
+                                    
+                                    <!-- Sección Archivo Adjunto -->
+                                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                        <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                            <i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Adjuntar Horario (PDF/IMG)
+                                        </label>
+                                        <input type="file" id="schedule-upload" accept="image/*,application/pdf" class="hidden" onchange="app.handleFileUpload(event)">
+                                        <button type="button" onclick="document.getElementById('schedule-upload').click()" class="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition text-sm font-medium text-gray-600 hover:text-blue-700 bg-white">
+                                            <i data-lucide="upload-cloud" class="w-4 h-4"></i> Subir Archivo
+                                        </button>
+                                        ${attachedFileIndicator}
+                                    </div>
+
+                                    <!-- Sección Patrón Infinito -->
+                                    <div class="space-y-4 pt-2 border-t border-gray-100">
+                                        <label class="flex items-center gap-3 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                            <input type="checkbox" id="shift-enabled" class="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" ${sd.enabled ? 'checked' : ''}>
+                                            <span class="text-sm font-bold text-gray-800">Activar patrón de turno automático (ej: 8x6)</span>
+                                        </label>
+
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Días de Trabajo</label>
+                                                <input type="number" id="shift-work" value="${sd.workDays}" min="1" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                            </div>
+                                            <div>
+                                                <label class="block text-xs font-semibold text-gray-700 mb-1">Días de Descanso</label>
+                                                <input type="number" id="shift-rest" value="${sd.restDays}" min="0" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-center font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Día de inicio (Primer día de trabajo)</label>
+                                            <input type="date" id="shift-anchor" value="${sd.anchorDate}" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-2">Color base para días de trabajo</label>
+                                            <div class="flex items-center gap-2 flex-wrap">
+                                                ${shiftColorOptions}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="px-5 py-4 bg-gray-50 border-t border-gray-200 flex justify-end gap-2">
+                                    <button onclick="app.closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+                                    <button onclick="app.saveShiftConfig()" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm">Aplicar y Guardar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const d = this.modalData;
+                    const isEditing = !!this.editingNoteId;
+                    
+                    // LÓGICA DE CLASE BASE CON ELIMINACIÓN
+                    const [y, m, day] = d.date.split('-').map(Number);
+                    const noteDate = new Date(y, m - 1, day);
+                    const noteDateDay = noteDate.getDay();
+                    
+                    const originalBaseClass = BASE_SCHEDULE[noteDateDay] && BASE_SCHEDULE[noteDateDay][d.blockId];
+                    const baseKey = `${noteDateDay}_${d.blockId}`;
+                    const isHidden = this.hiddenBaseClasses && this.hiddenBaseClasses[baseKey];
+                    
+                    let baseClassHtml = '';
+                    if (originalBaseClass) {
+                        if (isHidden) {
+                            baseClassHtml = `
+                                <div class="bg-gray-100 border border-gray-300 rounded p-2 flex justify-between items-center shadow-sm mb-3">
+                                    <span class="text-xs font-bold text-gray-500 line-through truncate w-3/4" title="Oculto en todos los ${DIAS_SEMANA[noteDateDay]}">${originalBaseClass} (Oculta)</span>
+                                    <button type="button" onclick="app.toggleBaseClass('${baseKey}')" class="text-blue-600 hover:text-blue-800 text-xs font-bold px-2 py-1 bg-blue-50 hover:bg-blue-100 rounded border border-blue-200 transition-colors">Restaurar</button>
+                                </div>
+                            `;
+                        } else {
+                            baseClassHtml = `
+                                <div class="bg-blue-50 border border-blue-200 rounded p-2 flex justify-between items-center shadow-sm mb-3">
+                                    <div class="flex flex-col w-3/4">
+                                        <span class="text-xs font-bold text-blue-900 truncate">Clase: ${originalBaseClass}</span>
+                                        <span class="text-[9px] text-gray-500 font-medium">Fija todos los ${DIAS_SEMANA[noteDateDay]}</span>
+                                    </div>
+                                    <button type="button" onclick="app.toggleBaseClass('${baseKey}')" class="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors" title="Eliminar clase de todos los ${DIAS_SEMANA[noteDateDay]}">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
+                    }
+
+                    let categoryOptions = BLOCK_CATEGORIES.map(c => `
+                        <option value="${c.id}" ${d.blockCategory === c.id ? 'selected' : ''}>${c.label}</option>
+                    `).join('');
+
+                    let colorOptions = COLORES_PAPELITOS.map(c => `
+                        <button type="button" 
+                                data-color="${c.id}"
+                                onclick="app.setModalColor('${c.id}')"
+                                class="color-btn w-6 h-6 md:w-8 md:h-8 rounded-full border-2 transition-all"></button>
+                    `).join('');
+
+                    let designOptions = DESIGNS.map(des => `
+                        <button type="button"
+                                data-design="${des.id}"
+                                onclick="app.setModalDesign('${des.id}')"
+                                class="design-btn transition-all"></button>
+                    `).join('');
+
+                    let blockOptions = SCHEDULE_BLOCKS.map(b => `
+                        <option value="${b.id}" ${d.blockId === b.id ? 'selected' : ''}>Bloque ${b.label} (${b.time})</option>
+                    `).join('');
+
+                    container.innerHTML = `
+                        <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in duration-200 transform transition-all max-h-[95vh] flex flex-col">
+                                
+                                <div class="bg-gray-50 px-4 md:px-5 py-3 md:py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+                                    <h3 class="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+                                        <i data-lucide="${isEditing ? 'edit-2' : 'edit-3'}" class="w-4 h-4 md:w-5 md:h-5 text-blue-600"></i>
+                                        Planificación
+                                    </h3>
+                                    <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-600 p-1 bg-gray-200 hover:bg-gray-300 rounded-full transition">
+                                        <i data-lucide="x" class="w-4 h-4 md:w-5 md:h-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="p-4 md:p-5 space-y-4 overflow-y-auto flex-1">
+                                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                                        <h4 class="text-xs font-bold text-blue-800 uppercase tracking-wider flex items-center gap-1"><i data-lucide="layout-grid" class="w-3 h-3"></i> Opciones de Casilla</h4>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-gray-500 mb-1">Fecha</label>
+                                                <input type="date" id="modal-date" value="${d.date}" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition" />
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] font-semibold text-gray-500 mb-1">Bloque</label>
+                                                <select id="modal-block" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                                                    ${blockOptions}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        
+                                        ${baseClassHtml}
+                                        
+                                        <div>
+                                            <label class="block text-[10px] font-semibold text-gray-500 mb-1">Destacar fondo (Opcional)</label>
+                                            <select id="modal-block-category" class="w-full border border-gray-300 rounded-lg p-2 text-sm text-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition font-medium">
+                                                ${categoryOptions}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1"><i data-lucide="sticky-note" class="w-3 h-3"></i> Papelito de Anotación</h4>
+                                        <div>
+                                            <div class="flex items-center gap-1.5 md:gap-2 flex-wrap mb-2">
+                                                ${designOptions}
+                                            </div>
+                                            <div class="flex items-center gap-1.5 md:gap-2 flex-wrap mb-3">
+                                                ${colorOptions}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div id="modal-text-wrapper" class="relative">
+                                                <textarea id="modal-text" placeholder="Escribe aquí tu planificación, materias o tareas...">${d.text}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="px-4 md:px-5 py-3 md:py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center flex-shrink-0">
+                                    ${isEditing ? `
+                                        <button onclick="app.deleteNote()" class="text-red-600 hover:text-red-700 text-xs md:text-sm font-medium flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-red-50 transition">
+                                            <i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Borrar Nota
+                                        </button>
+                                    ` : `<div></div>`}
+                                    
+                                    <div class="flex gap-2">
+                                        <button onclick="app.closeModal()" class="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
+                                        <button onclick="app.saveNote()" class="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm">Guardar</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.querySelectorAll('.design-btn').forEach((btn, index) => {
+                        btn.innerText = DESIGNS[index].label;
+                    });
+
+                    this.updateModalPreview(); 
+                }
+                
+                lucide.createIcons();
+            },
+
+            render() {
+                this.renderHeader();
+                this.renderEmbeddedSchedule(); 
+                
+                const contentDiv = document.getElementById('agenda-content');
+                if (this.view === 'month') {
+                    contentDiv.innerHTML = this.renderMonth();
+                } else {
+                    contentDiv.innerHTML = this.renderWeek();
+                }
+
+                lucide.createIcons();
+            },
+
+            init() {
+                this.loadDataLocally();
+                this.render();
+                
+                document.addEventListener('click', (e) => {
+                    const menu = document.getElementById('export-menu');
+                    const btn = e.target.closest('button[onclick="app.toggleExportMenu()"]');
+                    if (!btn && this.exportMenuOpen) {
+                        this.exportMenuOpen = false;
+                        if (menu) menu.classList.add('hidden');
+                    }
+                });
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
