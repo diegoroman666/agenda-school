@@ -266,9 +266,9 @@
 
         // --- ESTADO GLOBAL Y APP ---
         const app = {
-            // Inicializado en 6 de MAYO de 2026
-            currentDate: new Date(2026, 4, 6), 
-            view: 'week', 
+            // Siempre arranca en la fecha actual del dispositivo -> recargar muestra la semana de hoy
+            currentDate: new Date(),
+            view: 'week',
             notes: [],
             blockSettings: {}, 
             hiddenBaseClasses: {}, // Estado para ocultar clases del horario base (Ej. '1_c2' para Lunes Bloque 2)
