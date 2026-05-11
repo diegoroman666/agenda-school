@@ -306,6 +306,14 @@
             categoryDropdownOpen: false,
             editingCategoryId: null,
 
+            // Panel "Mover nota a otra fecha"
+            showMovePanel: false,
+
+            // Dictado por voz (Web Speech API)
+            isRecording: false,
+            _recognition: null,
+            _recordingBaseText: '',
+
             // --- LOCAL STORAGE ---
             saveDataLocally() {
                 try {
@@ -576,6 +584,132 @@
                 this.render();
             },
 
+            // --- REPETIR COLOR DE FONDO EN LA SIGUIENTE SEMANA ---
+            repeatBlockCategoryNextWeek() {
+                const cat = this.modalData.blockCategory;
+                if (!cat || cat === 'none') {
+                    alert('Primero elige una categoría en "Destacar fondo" para poder repetirla.');
+                    return;
+                }
+                const [y, m, d] = this.modalData.date.split('-').map(Number);
+                const nextDate = new Date(y, m - 1, d + 7);
+                const nextDateStr = this.getFormattedDate(nextDate);
+                const newCellKey = `${nextDateStr}_${this.modalData.blockId}`;
+                const catLabel = this.getCategoryLabel(cat);
+                const blockLabel = (SCHEDULE_BLOCKS.find(b => b.id === this.modalData.blockId) || {}).label || '';
+                const ok = confirm(`¿Aplicar el color "${catLabel}" al mismo día (${nextDateStr}, Bloque ${blockLabel}) de la siguiente semana?`);
+                if (!ok) return;
+                this.blockSettings[newCellKey] = cat;
+                this.saveDataLocally();
+                this.render();
+            },
+
+            // --- MOVER NOTA A OTRA FECHA/BLOQUE ---
+            toggleMovePanel() {
+                this.showMovePanel = !this.showMovePanel;
+                const panel = document.getElementById('move-note-panel');
+                if (panel) panel.classList.toggle('hidden', !this.showMovePanel);
+            },
+            confirmMoveNote() {
+                const newDate = document.getElementById('move-date')?.value;
+                const newBlockId = document.getElementById('move-block')?.value;
+                if (!newDate || !newBlockId) {
+                    alert('Selecciona fecha y bloque destino.');
+                    return;
+                }
+                if (this.editingNoteId) {
+                    // Mover nota existente
+                    this.notes = this.notes.map(n => n.id === this.editingNoteId
+                        ? { ...n, date: newDate, blockId: newBlockId }
+                        : n);
+                } else {
+                    // Si la nota aun no existe, solo actualizamos el formulario para que al Guardar caiga ahi
+                    this.modalData.date = newDate;
+                    this.modalData.blockId = newBlockId;
+                    const dateInp = document.getElementById('modal-date');
+                    const blkSel = document.getElementById('modal-block');
+                    if (dateInp) dateInp.value = newDate;
+                    if (blkSel) blkSel.value = newBlockId;
+                }
+                this.showMovePanel = false;
+                this.saveDataLocally();
+                this.closeModal();
+                this.render();
+            },
+
+            // --- DICTADO POR VOZ (Web Speech API) ---
+            toggleRecording() {
+                if (this.isRecording) {
+                    try { this._recognition && this._recognition.stop(); } catch (e) {}
+                    return;
+                }
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) {
+                    alert('Tu navegador no soporta dictado por voz. Usa Google Chrome (PC/Android) o Safari (iOS).');
+                    return;
+                }
+                const textarea = document.getElementById('modal-text');
+                if (!textarea) return;
+                this._recordingBaseText = textarea.value.replace(/\s+$/, '');
+
+                const recognition = new SR();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'es-ES';
+
+                let finalAcumulado = '';
+                recognition.onresult = (event) => {
+                    let interim = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const t = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) finalAcumulado += t + ' ';
+                        else interim += t;
+                    }
+                    const base = this._recordingBaseText ? this._recordingBaseText + ' ' : '';
+                    textarea.value = base + finalAcumulado + interim;
+                    this.modalData.text = textarea.value;
+                };
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                        alert('Permiso de micrófono denegado. Habilítalo en la configuración del navegador.');
+                    } else if (event.error === 'no-speech') {
+                        // ignorar, ocurre cuando hay silencio
+                    } else {
+                        alert('Error al dictar: ' + event.error);
+                    }
+                };
+                recognition.onend = () => {
+                    this.isRecording = false;
+                    this._recognition = null;
+                    this.updateRecordButton();
+                };
+
+                try {
+                    recognition.start();
+                    this._recognition = recognition;
+                    this.isRecording = true;
+                    this.updateRecordButton();
+                } catch (e) {
+                    console.error(e);
+                    alert('No se pudo iniciar el dictado.');
+                }
+            },
+            updateRecordButton() {
+                const btn = document.getElementById('record-btn');
+                if (!btn) return;
+                if (this.isRecording) {
+                    btn.innerHTML = '<i data-lucide="mic-off" class="w-3.5 h-3.5"></i> Detener';
+                    btn.className = 'flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-bold text-white rounded transition shadow-sm animate-pulse';
+                    btn.style.cssText = 'background-color: #dc2626 !important;';
+                } else {
+                    btn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5"></i> Grabar voz';
+                    btn.className = 'flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition';
+                    btn.style.cssText = '';
+                }
+                lucide.createIcons();
+            },
+
             // --- DROPDOWN PERSONALIZADO DE CATEGORIAS "DESTACAR FONDO" ---
             getCategoryLabel(id) {
                 if (this.customCategoryLabels && this.customCategoryLabels[id]) {
@@ -736,17 +870,19 @@
             openModalToCreate(dateStr, blockId) {
                 const cellKey = `${dateStr}_${blockId}`;
                 const currentCategory = this.blockSettings[cellKey] || 'none';
-                
+
                 this.modalType = 'note';
                 this.editingNoteId = null;
-                this.modalData = { 
-                    date: dateStr, 
-                    blockId: blockId || 'c1', 
-                    text: '', 
-                    color: 'yellow', 
+                this.modalData = {
+                    date: dateStr,
+                    blockId: blockId || 'c1',
+                    text: '',
+                    color: 'yellow',
                     design: 'classic',
                     blockCategory: currentCategory
                 };
+                this.showMovePanel = false;
+                this.isRecording = false;
                 this.modalOpen = true;
                 this.renderModal();
             },
@@ -758,11 +894,13 @@
 
                     this.modalType = 'note';
                     this.editingNoteId = note.id;
-                    this.modalData = { 
-                        ...note, 
+                    this.modalData = {
+                        ...note,
                         design: note.design || 'classic',
                         blockCategory: currentCategory
                     };
+                    this.showMovePanel = false;
+                    this.isRecording = false;
                     this.modalOpen = true;
                     this.renderModal();
                 }
@@ -771,6 +909,12 @@
                 this.modalOpen = false;
                 this.categoryDropdownOpen = false;
                 this.editingCategoryId = null;
+                this.showMovePanel = false;
+                if (this.isRecording && this._recognition) {
+                    try { this._recognition.stop(); } catch (e) {}
+                    this.isRecording = false;
+                    this._recognition = null;
+                }
                 this.renderModal();
             },
             setModalColor(colorId) {
@@ -1118,10 +1262,14 @@
                 const textClasses = isMonthView
                     ? `whitespace-pre-wrap break-words`
                     : `text-[9px] md:text-xs font-medium leading-tight whitespace-pre-wrap break-words relative z-0`;
-                const textStyle = `color: ${colorConfig.hexText} !important;`;
+                // word-break/overflow-wrap fuerzan que palabras MUY largas (URLs, texto sin espacios) tambien
+                // se corten en multiples lineas en lugar de estirar la celda horizontalmente.
+                const textStyle = `color: ${colorConfig.hexText} !important; word-break: break-word; overflow-wrap: anywhere;`;
+                // El contenedor del papelito ocupa todo el ancho de la celda y nunca la fuerza a expandirse.
+                const containerWidthStyle = ` width: 100%; max-width: 100%; min-width: 0;`;
 
                 return `
-                    <div onclick="event.stopPropagation(); app.openModalToEdit('${note.id}')" class="${containerClasses}" style="${containerStyle}">
+                    <div onclick="event.stopPropagation(); app.openModalToEdit('${note.id}')" class="${containerClasses}" style="${containerStyle}${containerWidthStyle}">
                         ${extraElements}
                         <p class="${textClasses}" style="${textStyle}">${note.text}</p>
                     </div>
@@ -1594,11 +1742,22 @@
                                                 <div id="category-dropdown-menu" class="hidden absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"></div>
                                             </div>
                                             <p class="text-[9px] text-gray-400 mt-1 italic">Toca el lápiz para renombrar una categoría.</p>
+                                            <button type="button" onclick="event.preventDefault(); app.repeatBlockCategoryNextWeek();"
+                                                    class="mt-2 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-[10px] md:text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded transition">
+                                                <i data-lucide="repeat" class="w-3.5 h-3.5"></i>
+                                                Repetir color en próxima semana
+                                            </button>
                                         </div>
                                     </div>
 
                                     <div class="space-y-3">
-                                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1"><i data-lucide="sticky-note" class="w-3 h-3"></i> Papelito de Anotación</h4>
+                                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1"><i data-lucide="sticky-note" class="w-3 h-3"></i> Papelito de Anotación</h4>
+                                            <button type="button" id="record-btn" onclick="event.preventDefault(); app.toggleRecording();"
+                                                    class="flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded transition">
+                                                <i data-lucide="mic" class="w-3.5 h-3.5"></i> Grabar voz
+                                            </button>
+                                        </div>
                                         <div>
                                             <div class="flex items-center gap-1.5 md:gap-2 flex-wrap mb-2">
                                                 ${designOptions}
@@ -1615,13 +1774,41 @@
                                     </div>
                                 </div>
 
-                                <div class="px-4 md:px-5 py-3 md:py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center flex-shrink-0">
-                                    ${isEditing ? `
-                                        <button onclick="app.deleteNote()" class="text-red-600 hover:text-red-700 text-xs md:text-sm font-medium flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-red-50 transition">
-                                            <i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Borrar Nota
+                                <!-- Panel "Mover nota a otra fecha" (oculto por defecto) -->
+                                <div id="move-note-panel" class="hidden mx-4 md:mx-5 mb-3 bg-amber-50 border border-amber-300 rounded-lg p-3 space-y-2 flex-shrink-0">
+                                    <h4 class="text-xs font-bold text-amber-900 flex items-center gap-1">
+                                        <i data-lucide="move" class="w-3.5 h-3.5"></i> Mover esta nota a:
+                                    </h4>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-[10px] font-semibold text-amber-800 mb-1">Nueva fecha</label>
+                                            <input type="date" id="move-date" value="${d.date}" class="w-full border border-amber-300 rounded p-1.5 text-xs text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-semibold text-amber-800 mb-1">Nuevo bloque</label>
+                                            <select id="move-block" class="w-full border border-amber-300 rounded p-1.5 text-xs text-gray-800 focus:ring-2 focus:ring-amber-500 outline-none">
+                                                ${blockOptions}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 justify-end">
+                                        <button type="button" onclick="app.toggleMovePanel()" class="px-3 py-1 text-xs font-medium text-amber-900 bg-white border border-amber-300 rounded hover:bg-amber-100 transition">Cancelar</button>
+                                        <button type="button" onclick="app.confirmMoveNote()" class="px-3 py-1 text-xs font-bold text-white bg-amber-600 rounded hover:bg-amber-700 transition shadow-sm">Mover</button>
+                                    </div>
+                                </div>
+
+                                <div class="px-4 md:px-5 py-3 md:py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center gap-2 flex-shrink-0 flex-wrap">
+                                    <div class="flex gap-1 md:gap-2 flex-wrap">
+                                        ${isEditing ? `
+                                            <button onclick="app.deleteNote()" class="text-red-600 hover:text-red-700 text-xs md:text-sm font-medium flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-red-50 transition">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Borrar
+                                            </button>
+                                        ` : ''}
+                                        <button onclick="app.toggleMovePanel()" class="text-amber-700 hover:text-amber-800 text-xs md:text-sm font-medium flex items-center gap-1 px-2 md:px-3 py-1.5 md:py-2 rounded-lg hover:bg-amber-50 transition">
+                                            <i data-lucide="move" class="w-3.5 h-3.5 md:w-4 md:h-4"></i> Mover a...
                                         </button>
-                                    ` : `<div></div>`}
-                                    
+                                    </div>
+
                                     <div class="flex gap-2">
                                         <button onclick="app.closeModal()" class="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">Cancelar</button>
                                         <button onclick="app.saveNote()" class="px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-sm">Guardar</button>
