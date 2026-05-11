@@ -638,8 +638,13 @@
             },
 
             // --- DICTADO POR VOZ (Web Speech API) ---
+            // Fix movil: en Chrome Android la sesion de reconocimiento se cierra sola cada
+            // cierto tiempo. Si re-emite resultados o si acumulamos final con += se duplican
+            // las palabras. Solucion: (1) reconstruir SIEMPRE el texto desde event.results[0]
+            // sin acumular, y (2) reiniciar la sesion automaticamente cuando termina sola.
             toggleRecording() {
                 if (this.isRecording) {
+                    this._userStoppedRecording = true;
                     try { this._recognition && this._recognition.stop(); } catch (e) {}
                     return;
                 }
@@ -651,48 +656,73 @@
                 const textarea = document.getElementById('modal-text');
                 if (!textarea) return;
                 this._recordingBaseText = textarea.value.replace(/\s+$/, '');
+                this._userStoppedRecording = false;
 
-                const recognition = new SR();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = 'es-ES';
+                const startSession = () => {
+                    const recognition = new SR();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = 'es-ES';
 
-                let finalAcumulado = '';
-                recognition.onresult = (event) => {
-                    let interim = '';
-                    for (let i = event.resultIndex; i < event.results.length; i++) {
-                        const t = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) finalAcumulado += t + ' ';
-                        else interim += t;
-                    }
-                    const base = this._recordingBaseText ? this._recordingBaseText + ' ' : '';
-                    textarea.value = base + finalAcumulado + interim;
-                    this.modalData.text = textarea.value;
-                };
-                recognition.onerror = (event) => {
-                    console.error('Speech recognition error:', event.error);
-                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                        alert('Permiso de micrófono denegado. Habilítalo en la configuración del navegador.');
-                    } else if (event.error === 'no-speech') {
-                        // ignorar, ocurre cuando hay silencio
-                    } else {
-                        alert('Error al dictar: ' + event.error);
-                    }
-                };
-                recognition.onend = () => {
-                    this.isRecording = false;
-                    this._recognition = null;
-                    this.updateRecordButton();
+                    recognition.onresult = (event) => {
+                        // Reconstruir DESDE 0 en cada evento: evita duplicaciones en moviles
+                        // donde event.resultIndex y los textos re-emitidos no son confiables.
+                        let interim = '';
+                        let final = '';
+                        for (let i = 0; i < event.results.length; i++) {
+                            const t = event.results[i][0].transcript;
+                            if (event.results[i].isFinal) final += t + ' ';
+                            else interim += t;
+                        }
+                        const base = this._recordingBaseText ? this._recordingBaseText + ' ' : '';
+                        textarea.value = base + final + interim;
+                        this.modalData.text = textarea.value;
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                            alert('Permiso de micrófono denegado. Habilítalo en la configuración del navegador.');
+                            this._userStoppedRecording = true;
+                        } else if (event.error === 'aborted' || event.error === 'no-speech' || event.error === 'network') {
+                            // Normales en moviles tras pausas / cambio de red. Dejar que onend reinicie.
+                        } else {
+                            alert('Error al dictar: ' + event.error);
+                            this._userStoppedRecording = true;
+                        }
+                    };
+
+                    recognition.onend = () => {
+                        // Si fue cierre automatico (movil) y el usuario sigue queriendo grabar,
+                        // congelamos lo dictado hasta ahora como nueva "base" y reiniciamos otra sesion.
+                        if (this.isRecording && !this._userStoppedRecording) {
+                            this._recordingBaseText = (textarea.value || '').replace(/\s+$/, '');
+                            try {
+                                startSession();
+                                return; // seguimos grabando, no actualizamos UI
+                            } catch (e) {
+                                console.error('No se pudo reiniciar dictado:', e);
+                            }
+                        }
+                        this.isRecording = false;
+                        this._recognition = null;
+                        this._userStoppedRecording = false;
+                        this.updateRecordButton();
+                    };
+
+                    recognition.start();
+                    this._recognition = recognition;
                 };
 
                 try {
-                    recognition.start();
-                    this._recognition = recognition;
+                    startSession();
                     this.isRecording = true;
                     this.updateRecordButton();
                 } catch (e) {
                     console.error(e);
                     alert('No se pudo iniciar el dictado.');
+                    this.isRecording = false;
+                    this._recognition = null;
                 }
             },
             updateRecordButton() {
